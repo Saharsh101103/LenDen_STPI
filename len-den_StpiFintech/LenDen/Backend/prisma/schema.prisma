@@ -1,0 +1,190 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             Int           @id @default(autoincrement())
+  email          String        @unique @db.VarChar(255)
+  password       String        @db.Text
+  name           String        @db.Text
+  contact        String       
+  panNumber      String        
+  aadharNumber   String        
+  accountNumber  String
+  ifsc           String        @db.Text
+  upi            String        @db.Text
+  payment_amount Int           @default(0) @db.Integer
+  payout_amount  Int           @default(0) @db.Integer
+  refund_amount  Int           @default(0) @db.Integer
+  KYC            Boolean       @default(false)
+  isAdmin        Boolean       @default(false)
+  integrations   Integration[] // New relation field
+  orders         Orders[] // New relation field
+  payouts        Payouts[] // New relation field
+  refunds        Refunds[] // New relation field
+  subscription   Subscription[] // New relation field
+  plan           Plan[] // New relation field
+}
+
+model Integration {
+  id           Int       @id @default(autoincrement())
+  email        String    @db.Text
+  businessName String    @unique @db.Text
+  xid          String    @unique @db.Text
+  xsecret      String    @unique @db.Text
+  domain       String[]  @db.Text // Array of strings
+  orders       Orders[] // New relation field
+  payouts      Payouts[] // New relation field
+  refunds      Refunds[] // New relation field
+  plan      Plan[] // New relation field
+  subscription      Subscription[] // New relation field
+
+  user User @relation(fields: [email], references: [email])
+
+  @@index([email], name: "idx_userEmail")
+}
+
+model Orders {
+  id             Int           @id @default(autoincrement())
+  email          String        @db.VarChar(255)
+  businessName   String        @db.Text
+  orderId        String        @unique @db.VarChar(255)
+  orderAmount    Int
+  payment_method PaymentMethod @default(CREDITCARD)
+  dc_num         String        @default("") //Debit Card Number
+  cc_num         String        @default("") //Credit Card Number
+  expiry         String        @default("") //Expiry
+  Nb_username    String        @default("") //NetBanking username
+  Nb_password    String        @default("") //NetBanking password
+  UPI            String        @default("") //UPI id
+  customerId     String
+  customerName   String
+  customerPhone  String
+  customerEmail  String
+  status         OrderStatus   @default(PROCESSING)
+  refunds        Refunds[] // New relation field
+
+  user        User        @relation(fields: [email], references: [email])
+  integration Integration @relation(fields: [businessName], references: [businessName])
+
+  @@index([email], name: "idx_orderUserEmail")
+  @@index([businessName], name: "idx_orderBusinessName")
+}
+
+model Payouts {
+  id            Int         @id @default(autoincrement())
+  email         String      @db.VarChar(255)
+  businessName  String      @db.Text
+  payoutId      String      @unique @db.VarChar(255)
+  payoutAmount  Int
+  customerId    String
+  customerName  String
+  customerPhone String
+  customerEmail String
+  status        OrderStatus @default(PROCESSING)
+
+  user        User        @relation(fields: [email], references: [email])
+  integration Integration @relation(fields: [businessName], references: [businessName])
+
+  @@index([email], name: "idx_payoutUserEmail")
+  @@index([businessName], name: "idx_payoutBusinessName")
+}
+
+model Refunds {
+  id            Int         @id @default(autoincrement())
+  email         String      @db.VarChar(255)
+  businessName  String      @db.Text
+  orderId       String
+  refundId      String      @unique @db.VarChar(255)
+  refundAmount  Int
+  customerId    String
+  customerName  String
+  customerPhone String
+  customerEmail String
+  status        OrderStatus @default(PROCESSING)
+
+  user        User        @relation(fields: [email], references: [email])
+  integration Integration @relation(fields: [businessName], references: [businessName])
+  order       Orders      @relation(fields: [orderId], references: [orderId])
+
+  @@index([email], name: "idx_refundUserEmail")
+  @@index([businessName], name: "idx_refundBusinessName")
+}
+
+model Plan {
+  id            Int       @id @default(autoincrement())
+  planId      String      @unique @db.VarChar(255)
+  email         String      @db.VarChar(255)
+  businessName  String      @db.Text
+  name          String
+  price         Int       // Price in cents (or smallest currency unit)
+  interval      String    // e.g., 'month', 'year'
+  intervalCount Int       // e.g., 1 for every month, 3 for every 3 months
+
+  user        User        @relation(fields: [email], references: [email])
+  integration Integration @relation(fields: [businessName], references: [businessName])
+
+  @@index([email], name: "idx_PlanUserEmail")
+  @@index([businessName], name: "idx_PlanBusinessName")
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id             Int           @id @default(autoincrement())
+  email          String        @db.VarChar(255)
+  businessName   String        @db.Text
+  orderId        String        @unique @db.VarChar(255)
+  planId      String                     
+  orderAmount    Int
+  payment_method PaymentMethod  @default(CREDITCARD)
+  dc_num         String        @default("") //Debit Card Number
+  cc_num         String        @default("") //Credit Card Number
+  expiry         String        @default("") //Expiry
+  Nb_username    String        @default("") //NetBanking username
+  Nb_password    String        @default("") //NetBanking password
+  UPI            String        @default("") //UPI id
+  customerId     String
+  customerName   String
+  customerPhone  String
+  customerEmail  String
+  startDate      DateTime  @default(now())
+  nextBillingDate DateTime
+  status         OrderStatus   @default(PROCESSING)
+
+  user        User        @relation(fields: [email], references: [email])
+  integration Integration @relation(fields: [businessName], references: [businessName])
+  plan Plan @relation(fields: [planId], references: [planId])
+
+  @@index([email], name: "idx_subscriptionUserEmail")
+  @@index([businessName], name: "idx_subscriptionBusinessName")
+
+}
+
+
+
+enum OrderStatus {
+  PROCESSING
+  SUCCESS
+  FAILED
+  ACTIVE
+  PAST_DUE
+  CANCELED
+}
+
+enum PaymentMethod {
+  DEBITCARD
+  CREDITCARD
+  UPI
+  NETBANKING
+}
