@@ -18,9 +18,6 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 
 // Define the schema for form validation
 const FormSchema = z.object({
-    email: z.string().min(10, {
-      message: "Email must be at least 10 characters",
-    }).email({ message: "Enter a valid email!" }),
     name: z.string().min(2, { message: "Name must be at least 2 characters" }),
     password: z.string().min(8, { message: "Password must be at least 8 characters" }),
     tnc: z.boolean().default(false).optional(),
@@ -48,7 +45,6 @@ function Page() {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      email: user?.email || '',
       name: "",
       password: "",
       tnc: false,
@@ -69,7 +65,7 @@ function Page() {
     if (data.tnc) {
       try {
         const response = await axios.post('http://localhost:8000/user/create_user', {
-          email: data.email,
+          email: user?.email,
           password: data.password,
           name: data.name,
           contact: data.contact,
@@ -83,12 +79,13 @@ function Page() {
 
         console.log("API response", response); // Debugging
 
-        if (response.data.message.email === data.email) {
+        if (response.data.email === user?.email) {
           toast({
             title: "Verification Successful",
             description: "You can continue to integration",
             variant: "default",
           });
+          router.push('/dashboard')
         } else {
           toast({
             title: "Verification Unsuccessful",
@@ -133,32 +130,6 @@ function Page() {
                     <FormLabel className="text-secondary">Name</FormLabel>
                     <FormControl>
                       <Input placeholder="John Doe" {...field} className="text-pretty text-primary" />
-                    </FormControl>
-                    <FormMessage className="-translate-y-3" />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-secondary">Password</FormLabel>
-                    <FormControl>
-                      <Input placeholder="********" {...field} type="password" className="text-pretty text-primary" />
-                    </FormControl>
-                    <FormMessage className="-translate-y-3" />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-secondary">Email</FormLabel>
-                    <FormControl>
-                      <Input placeholder="email@example.com" {...field} type="email" className="text-pretty text-primary" />
                     </FormControl>
                     <FormMessage className="-translate-y-3" />
                   </FormItem>
