@@ -21,7 +21,7 @@ export default function DashboardPage() {
   const [site, setsite] = useState(false)
   const params = usePathname()
   useEffect(() => {
-    if (params === "/dashboard" || params === "/services/payments" || params === "/services/payouts" || params === "/services/subscriptions" || params === "/services/refunds" || params === "/KYC") {
+    if (params === "/dashboard" || params === "/services/payments" || params === "/services/payouts" || params === "/services/subscriptions" || params === "/services/refunds" || params === "/KYC" || params === "/integrations" || params === "/customers") {
       setsite(false);
     } else {
       setsite(true);

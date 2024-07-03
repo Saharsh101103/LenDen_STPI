@@ -23,20 +23,6 @@ const Dashboard = () => {
   const [orderCount, setorderCount] = useState(0);
   const [KYC, setKYC] = useState(false)
   const router = useRouter();
-  const data = [
-    {
-      data : 1,
-      value: 2
-    },
-    {
-      data : 1,
-      value: 2
-    },
-    {
-      data : 1,
-      value: 2
-    },
-  ]
 
   useEffect(() => {
     const getSession = async () => {
@@ -47,7 +33,6 @@ const Dashboard = () => {
         router.push('/auth/login');
       } else {
         setUser(session.user);
-           console.log(KYC_Status.data.message)
             setKYC(KYC_Status.data.message)
       }
 
@@ -70,13 +55,11 @@ const Dashboard = () => {
           }
       });
       };
-      console.log("orders", orders)
     
     getSession();
     }, [router]);
   
   if (!user) return null;
-    console.log(orders)
   return (
     <>
     <div className="hidden flex-col md:flex bg-primary-foreground text-primary min-h-screen">
@@ -116,7 +99,7 @@ const Dashboard = () => {
                   </svg>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">INR  {parseFloat(paymentAmount) - parseFloat(payoutAmount) - parseFloat(refundAmount)}</div>
+                  <div className="text-2xl font-bold">₹  {parseFloat(paymentAmount) - parseFloat(payoutAmount) - parseFloat(refundAmount)}</div>
                 </CardContent>
               </Card>
               <Card className='bg-secondary'>
@@ -140,7 +123,7 @@ const Dashboard = () => {
                   </svg>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">INR {paymentAmount}</div>
+                  <div className="text-2xl font-bold">₹ {paymentAmount}</div>
                 </CardContent>
               </Card>
               <Card className='bg-secondary'>
@@ -161,7 +144,7 @@ const Dashboard = () => {
                   </svg>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">INR {payoutAmount}</div>
+                  <div className="text-2xl font-bold">₹ {payoutAmount}</div>
                 </CardContent>
               </Card>
               <Card className='bg-secondary'>
@@ -183,7 +166,7 @@ const Dashboard = () => {
                   </svg>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{refundAmount}</div>
+                  <div className="text-2xl font-bold">₹ {refundAmount}</div>
                 </CardContent>
               </Card>
             </div>
@@ -200,11 +183,30 @@ const Dashboard = () => {
                 <CardHeader>
                   <CardTitle>Recent Orders</CardTitle>
                   <CardDescription>
-                    There were {orderCount} orders this month.
+                  {(orderCount == 0) ?
+            <>
+            There are no orders.
+            </> :
+            <>
+             
+            {orderCount} Orders
+              
+            </>
+          }
                   </CardDescription>
                 </CardHeader>
                 <CardContent className='flex flex-col space-y-4'>
-                 {orders.map((order)=>(<RecentSales key={order.id} customerName={order.customerName} email={order.email} amount={order.orderAmount} />))} 
+                  {(orderCount == 0) ?
+            <div className='
+            flex justify-center items-center w-full h-full'>
+            Your orders will appear here.
+            </div> :
+            <>
+             {orders.map((order)=>(<RecentSales key={order.id} customerName={order.customerName} email={order.customerEmail} amount={order.orderAmount} />))} 
+          
+              
+            </>
+          }
                 </CardContent>
               </Card>
             </div>

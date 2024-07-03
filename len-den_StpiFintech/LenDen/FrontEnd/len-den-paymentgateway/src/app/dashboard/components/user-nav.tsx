@@ -1,3 +1,6 @@
+"use client"
+
+import SignOutButton from "@/components/SignoutButton";
 import {
   Avatar,
   AvatarFallback,
@@ -14,47 +17,54 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { supabase } from "@/lib/supabaseClient";
+import axios from "axios";
+import Link from "next/link";
+import { useState } from "react";
 
 export default function UserNav() {
+
+  const [Name, setName] = useState("")
+  const [Email, setEmail] = useState("")
+
+  const getSession = async () => {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error || !session) {
+      
+    } else {
+      
+      const  userDetails = await axios.get(`http://localhost:8000/user/get_user?email=${session?.user.email}`)
+      setName(userDetails.data.name)
+      setEmail(userDetails.data.email)
+    }
+    };
+  
+    getSession()
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
-            <AvatarFallback>SC</AvatarFallback>
+            <AvatarFallback>{Name.charAt(0).toUpperCase()}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">shadcn</p>
+            <p className="text-sm font-medium leading-none">{Name}</p>
             <p className="text-xs leading-none text-muted-foreground">
-              m@example.com
+              {Email}
             </p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem>
-            Profile
-            <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
+            <Link href={"/integrations"}>Integrations</Link>
           </DropdownMenuItem>
-          <DropdownMenuItem>
-            Billing
-            <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
-          </DropdownMenuItem>
-          <DropdownMenuItem>
-            Settings
-            <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
-          </DropdownMenuItem>
-          <DropdownMenuItem>New Team</DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
-          Log out
-          <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
-        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )

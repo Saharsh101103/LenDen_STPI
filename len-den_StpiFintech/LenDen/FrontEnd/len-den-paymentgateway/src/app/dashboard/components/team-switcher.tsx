@@ -79,8 +79,8 @@ const groups = [
     label: "KYC",
     teams: [
       {
-        label: "Complete KYC",
-        value: "/KYC",
+        label: "Update KYC",
+        value: "/update-KYC",
       },
     ],
   },
@@ -127,7 +127,7 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
         <PopoverContent className="w-[200px] p-0">
           <Command>
             <CommandList>
-              <CommandInput placeholder="Search team..." />
+              <CommandInput placeholder="Search service..." />
               <CommandEmpty>Not Available</CommandEmpty>
               {groups.map((group) => (
                 <CommandGroup key={group.label} heading={group.label}>
@@ -147,7 +147,7 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
                           alt={team.label}
                           className="grayscale"
                         />
-                        <AvatarFallback>SC</AvatarFallback>
+                        <AvatarFallback>{team.label.charAt(0)}</AvatarFallback>
                       </Avatar>
                       {team.label}
                       <CheckIcon

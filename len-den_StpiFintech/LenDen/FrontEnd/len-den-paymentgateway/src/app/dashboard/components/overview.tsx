@@ -42,7 +42,7 @@ const Overview: React.FC<OverviewProps> = ({ paymentAmount,payoutAmount,refundAm
           fontSize={12}
           tickLine={false}
           axisLine={false}
-          tickFormatter={(value: any) => `$${value}`}
+          tickFormatter={(value: any) => `₹${value}`}
         />
         <Bar
           dataKey="total"
