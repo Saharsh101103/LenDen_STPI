@@ -36,7 +36,7 @@ router.post('/create_user', async (req, res) => {
 
   try {
     // Hash the password
-    const hashedPassword = await bcrypt.hash(req.body.password, 10);
+    const hashedPassword = await bcrypt.hash(req.body.password || "", 10);
           // Encrypt other sensitive fields
     const encryptedPanNumber = encrypt(req.body.panNumber);
     const encryptedAadharNumber = encrypt(req.body.aadharNumber);

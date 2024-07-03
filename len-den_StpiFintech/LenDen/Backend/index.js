@@ -36,6 +36,11 @@ app.use("/payout", payouts); //For payout
 app.use("/refund", refunds); //For refund
 app.use("/recurring", recurring); //For refund
 
+app.get("/orderCount",async(req, res) => {
+  const count = await prisma.orders.count({where: {email: req.query.email}});
+  res.status(200).json(count);
+})
+
 app.listen(8000, () => {
   console.log("Server is running on port 8000");
 });

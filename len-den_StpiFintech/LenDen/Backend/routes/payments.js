@@ -220,5 +220,10 @@ module.exports = router;
     }
   });
 
+  router.get('/get_orders', async(req,res) => {
+    const orders = await prisma.orders.findMany({where: {email: req.body.email}})
+    res.status(200).json(orders);
+  })
+
 
 module.exports = router;

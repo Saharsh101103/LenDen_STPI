@@ -16,6 +16,11 @@ import KycAlert from '@/components/kycAlert';
 
 const Dashboard = () => {
   const [user, setUser] = useState<User | null>(null);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [paymentAmount, setPaymentAmount] = useState("0");
+  const [payoutAmount, setPayoutAmount] = useState("0");
+  const [refundAmount, setRefundAmount] = useState("0");
+  const [orderCount, setorderCount] = useState(0);
   const [KYC, setKYC] = useState(false)
   const router = useRouter();
   const data = [
@@ -36,7 +41,7 @@ const Dashboard = () => {
   useEffect(() => {
     const getSession = async () => {
       const { data: { session }, error } = await supabase.auth.getSession();
-      const  KYC_Status = await axios.get(`http://localhost:8000/user/check_kyc?email=saharshraj10@gmail.com`)
+      const  KYC_Status = await axios.get(`http://localhost:8000/user/check_kyc?email=${session?.user.email}`)
 
       if (error || !session) {
         router.push('/auth/login');
@@ -44,6 +49,17 @@ const Dashboard = () => {
         setUser(session.user);
            console.log(KYC_Status.data.message)
             setKYC(KYC_Status.data.message)
+      }
+
+      if(!KYC){
+      const  userDetails = await axios.get(`http://localhost:8000/user/get_user?email=${session?.user.email}`)
+      const orderCount = await axios.get(`http://localhost:8000/orderCount?email=${session?.user.email}`)
+      const orders = await axios.get(`http://localhost:8000/payment/get_orders?email=${session?.user.email}`)
+      setOrders(orders.data)
+      setPaymentAmount(userDetails.data.payment_amount)
+      setPayoutAmount(userDetails.data.payout_amount)
+      setRefundAmount(userDetails.data.refund_amount)
+      setorderCount(orderCount.data)
       }
 
       supabase.auth.onAuthStateChange((_event, session) => {
@@ -54,14 +70,13 @@ const Dashboard = () => {
           }
       });
       };
-      
+      console.log("orders", orders)
     
     getSession();
     }, [router]);
-     
   
   if (!user) return null;
-
+    console.log(orders)
   return (
     <>
     <div className="hidden flex-col md:flex bg-primary-foreground text-primary min-h-screen">
@@ -101,7 +116,7 @@ const Dashboard = () => {
                   </svg>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">INR 45,231.89</div>
+                  <div className="text-2xl font-bold">INR  {parseFloat(paymentAmount) - parseFloat(payoutAmount) - parseFloat(refundAmount)}</div>
                 </CardContent>
               </Card>
               <Card className='bg-secondary'>
@@ -125,7 +140,7 @@ const Dashboard = () => {
                   </svg>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">INR 1,244</div>
+                  <div className="text-2xl font-bold">INR {paymentAmount}</div>
                 </CardContent>
               </Card>
               <Card className='bg-secondary'>
@@ -146,13 +161,13 @@ const Dashboard = () => {
                   </svg>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">INR 12,233</div>
+                  <div className="text-2xl font-bold">INR {payoutAmount}</div>
                 </CardContent>
               </Card>
               <Card className='bg-secondary'>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">
-                    From Subscription
+                    Refunds
                   </CardTitle>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -168,7 +183,7 @@ const Dashboard = () => {
                   </svg>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">INR 300</div>
+                  <div className="text-2xl font-bold">{refundAmount}</div>
                 </CardContent>
               </Card>
             </div>
@@ -178,18 +193,18 @@ const Dashboard = () => {
                   <CardTitle>Overview</CardTitle>
                 </CardHeader>
                 <CardContent className="pl-2">
-                  <Overview/>
+                  <Overview paymentAmount={parseFloat(paymentAmount)} payoutAmount={parseFloat(payoutAmount)} refundAmount={parseFloat(refundAmount)} />
                 </CardContent>
               </Card>
               <Card className="col-span-3 bg-primary-foreground text-primary">
                 <CardHeader>
                   <CardTitle>Recent Orders</CardTitle>
                   <CardDescription>
-                    There were 200 orders this month.
+                    There were {orderCount} orders this month.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className='flex flex-col space-y-4'>
-                 {data.map((content)=>(<RecentSales key={content.data} />))} 
+                 {orders.map((order)=>(<RecentSales key={order.id} customerName={order.customerName} email={order.email} amount={order.orderAmount} />))} 
                 </CardContent>
               </Card>
             </div>

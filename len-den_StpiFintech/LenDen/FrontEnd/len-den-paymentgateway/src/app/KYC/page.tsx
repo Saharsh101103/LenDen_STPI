@@ -12,14 +12,13 @@ import { supabase } from '@/lib/supabaseClient';
 import axios from "axios";
 import { useRouter } from 'next/navigation';
 import { Icons } from "@/components/ui/icons";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { User } from "@supabase/supabase-js";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 
 // Define the schema for form validation
 const FormSchema = z.object({
     name: z.string().min(2, { message: "Name must be at least 2 characters" }),
-    password: z.string().min(8, { message: "Password must be at least 8 characters" }),
     tnc: z.boolean().default(false).optional(),
     contact: z.string().min(10, { message: "Contact number must be 10 digits" }).max(10, { message: "Contact number must be 10 digits" }),
     panNumber: z.string().min(10, { message: "Pan number must be 10 digits" }).max(10, { message: "Pan number must be 10 digits" }),
@@ -34,10 +33,13 @@ function Page() {
   const router = useRouter();
 
   useEffect(() => {
+    console.log("useEffect called"); // Debugging
     const getSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (session) setUser(session.user);
-      console.log("Session: ", session); // Debugging
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setUser(session.user);
+        console.log("Session: ", session); // Debugging
+      }
     };
     getSession();
   }, []);
@@ -46,7 +48,6 @@ function Page() {
     resolver: zodResolver(FormSchema),
     defaultValues: {
       name: "",
-      password: "",
       tnc: false,
       contact: "",
       panNumber: "",
@@ -60,13 +61,12 @@ function Page() {
   const isSubmitting = form.formState.isSubmitting;
 
   // Handle form submission
-  async function onSubmit(data: z.infer<typeof FormSchema>) {
-    console.log("Submitting form", data); // Debugging
+  const onSubmit = useCallback(async (data: z.infer<typeof FormSchema>) => {
+    console.log("onSubmit called with data:", data); // Debugging
     if (data.tnc) {
       try {
         const response = await axios.post('http://localhost:8000/user/create_user', {
           email: user?.email,
-          password: data.password,
           name: data.name,
           contact: data.contact,
           panNumber: data.panNumber,
@@ -85,7 +85,7 @@ function Page() {
             description: "You can continue to integration",
             variant: "default",
           });
-          router.push('/dashboard')
+          router.push('/dashboard');
         } else {
           toast({
             title: "Verification Unsuccessful",
@@ -108,7 +108,9 @@ function Page() {
         variant: "destructive",
       });
     }
-  }
+  }, [user, router]);
+
+  console.log("Rendering form"); // Debugging
 
   return (
     <div className='p-4 bg-primary-foreground min-h-screen bg-[url(/KYCbg.png)] flex justify-center items-center'>
@@ -155,7 +157,7 @@ function Page() {
                   <FormItem>
                     <FormLabel className="text-secondary">Pan Number</FormLabel>
                     <FormControl>
-                      <Input placeholder="AAAPZ1234C" {...field} type="text" className="text-pretty text-primary" />
+                      <Input placeholder="AAAPZ1234C1" {...field} type="text" className="text-pretty text-primary" />
                     </FormControl>
                     <FormMessage className="-translate-y-3" />
                   </FormItem>
@@ -168,7 +170,7 @@ function Page() {
                   <FormItem>
                     <FormLabel className="text-secondary">Aadhar Number</FormLabel>
                     <FormControl>
-                      <Input placeholder="662223509284" {...field} type="text" className="text-pretty text-primary" />
+                      <Input placeholder="Enter: 662223509284" {...field} type="text" className="text-pretty text-primary" />
                     </FormControl>
                     <FormMessage className="-translate-y-3" />
                   </FormItem>
@@ -181,7 +183,7 @@ function Page() {
                   <FormItem>
                     <FormLabel className="text-secondary">Bank Account Number</FormLabel>
                     <FormControl>
-                      <Input placeholder="23122204240" {...field} type="text" className="text-pretty text-primary" />
+                      <Input placeholder="Enter: 23122204240" {...field} type="text" className="text-pretty text-primary" />
                     </FormControl>
                     <FormMessage className="-translate-y-3" />
                   </FormItem>
@@ -194,7 +196,7 @@ function Page() {
                   <FormItem>
                     <FormLabel className="text-secondary">IFSC code</FormLabel>
                     <FormControl>
-                      <Input placeholder="LENDEN00010" {...field} type="text" className="text-pretty text-primary" />
+                      <Input placeholder="Enter: LENDEN00010" {...field} type="text" className="text-pretty text-primary" />
                     </FormControl>
                     <FormMessage className="-translate-y-3" />
                   </FormItem>
@@ -205,9 +207,9 @@ function Page() {
                 name="upi"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-secondary">UPI id</FormLabel>
+                    <FormLabel className="text-secondary">UPI ID</FormLabel>
                     <FormControl>
-                      <Input placeholder="98xxxxxx52@upi" {...field} type="text" className="text-pretty text-primary" />
+                      <Input placeholder="Enter: user@lenden" {...field} type="text" className="text-pretty text-primary" />
                     </FormControl>
                     <FormMessage className="-translate-y-3" />
                   </FormItem>
@@ -220,7 +222,7 @@ function Page() {
                   <FormItem>
                     <FormControl>
                       <div className="flex items-center space-x-2 mt-4">
-                        <Checkbox id="terms" checked={field.value} onCheckedChange={field.onChange} className="data-[state=checked]:bg-secondary data-[state=checked]:text-secondary-foreground"/>
+                        <Checkbox id="terms" checked={field.value} onCheckedChange={field.onChange} className="data-[state=checked]:bg-secondary data-[state=checked]:text-secondary-foreground" />
                         <label
                           htmlFor="terms"
                           className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
@@ -250,7 +252,7 @@ function Page() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
 
 export default Page;
