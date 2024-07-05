@@ -46,7 +46,7 @@ router.post('/create_integration', async (req, res) => {
         where: {businessName: req.body.businessName}
     })
     if(exists){
-        res.status(400).json({message: "Integration with same Business already exists", details: exists})
+        res.status(200).json({message: "Integration with same Business already exists", details: exists})
     }
     else{
         
@@ -85,7 +85,9 @@ router.post('/create_integration', async (req, res) => {
           where: {businessName: req.body.businessName},
           data: {
             xid: x_id,
-            xsecret: x_secret
+            xsecret: x_secret,
+            businessName: req.body.businessName || integration.businessName,
+            domain: req.body.domain || integration.domain
           }
         })
         res.status(200).json({message: "Success", integration})
@@ -99,8 +101,8 @@ router.post('/create_integration', async (req, res) => {
 //To get info about an integration
 
 router.get('/get_integration', async(req,res)=> {
-  const exists = await prisma.integration.findFirst({
-    where: {businessName: req.query.businessName}
+  const exists = await prisma.integration.findMany({
+    where: {email: req.query.email}
 })
 if(!exists){
     res.status(404).json({message: "Not Found"})
@@ -112,23 +114,28 @@ else{
 
 // To delete a perticular integration
 
-router.delete('/delete_integration', async(req,res)=> {
-  const exists = await prisma.integration.findFirst({
-    where: {businessName: req.body.businessName}
-})
-if(!exists){
-    res.status(404).json({message: "Not Found"})
-}
-else{
+router.delete('/delete_integration', async (req, res) => {
   try {
-    const object = prisma.integration.delete({
-      where: {businessName: req.body.businessName}
-    })
-    res.status(200).json({message: "Success"})
+    // Check if the integration exists
+    const exists = await prisma.integration.findFirst({
+      where: { businessName: req.query.businessName }
+    });
+
+    if (!exists) {
+      return res.status(404).json({ message: "Integration not found" });
+    }
+
+    // Delete the integration
+    await prisma.integration.delete({
+      where: { businessName: req.query.businessName }
+    });
+
+    res.status(200).json({ message: "Integration deleted successfully" });
   } catch (error) {
-    res.status(400).json(error)
+    // Handle database errors or other unexpected errors
+    res.status(500).json({ error: "Internal Server Error" });
   }
-}
-})
+});
+
         
 module.exports = router;

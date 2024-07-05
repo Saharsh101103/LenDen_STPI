@@ -43,7 +43,7 @@ model Integration {
   businessName String    @unique @db.Text
   xid          String    @unique @db.Text
   xsecret      String    @unique @db.Text
-  domain       String[]  @db.Text // Array of strings
+  domain       String    @db.Text 
   orders       Orders[] // New relation field
   payouts      Payouts[] // New relation field
   refunds      Refunds[] // New relation field

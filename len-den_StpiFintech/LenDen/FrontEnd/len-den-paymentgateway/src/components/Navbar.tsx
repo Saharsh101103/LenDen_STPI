@@ -27,7 +27,7 @@ export default function DashboardPage() {
       setsite(true);
     }
   }, [params]);
-  const classnames = cn({["hidden"]: site ,["hidden flex-col md:flex bg-secondary text-secondary-foreground"]: !site} )
+  const classnames = cn({["hidden"]: site ,["hidden fixed flex-col md:flex bg-secondary text-secondary-foreground w-full"]: !site} )
   return (
     <>
       <div className={classnames}>

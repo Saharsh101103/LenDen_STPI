@@ -32,10 +32,17 @@ export default function UserNav() {
     if (error || !session) {
       
     } else {
-      
-      const  userDetails = await axios.get(`http://localhost:8000/user/get_user?email=${session?.user.email}`)
-      setName(userDetails.data.name)
-      setEmail(userDetails.data.email)
+      try {
+        
+        const  userDetails = await axios.get(`http://localhost:8000/user/get_user?email=${session?.user.email}`)
+        if(userDetails){
+  
+          setName(userDetails.data.name)
+          setEmail(userDetails.data.email)
+        }
+      } catch (error) {
+        console.log(error)
+      }
     }
     };
   
