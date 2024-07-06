@@ -35,13 +35,13 @@ const Dashboard = () => {
 
         setUser(session.user);
 
-        const KYC_Status = await axios.get(`http://localhost:8000/user/check_kyc?email=${session.user.email}`);
+        const KYC_Status = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/check_kyc?email=${session.user.email}`);
         setKYC(KYC_Status.data.message);
 
         if (!KYC) {
-          const userDetails = await axios.get(`http://localhost:8000/user/get_user?email=${session.user.email}`);
-          const orderCount = await axios.get(`http://localhost:8000/orderCount?email=${session.user.email}`);
-          const orders = await axios.get(`http://localhost:8000/payment/get_orders?email=${session.user.email}`);
+          const userDetails = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/get_user?email=${session.user.email}`);
+          const orderCount = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/orderCount?email=${session.user.email}`);
+          const orders = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/payment/get_orders?email=${session.user.email}`);
 
           setOrders(orders.data);
           setPaymentAmount(userDetails.data.payment_amount);

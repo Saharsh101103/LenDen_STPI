@@ -34,7 +34,7 @@ export default function UserNav() {
     } else {
       try {
         
-        const  userDetails = await axios.get(`http://localhost:8000/user/get_user?email=${session?.user.email}`)
+        const  userDetails = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/get_user?email=${session?.user.email}`)
         if(userDetails){
   
           setName(userDetails.data.name)

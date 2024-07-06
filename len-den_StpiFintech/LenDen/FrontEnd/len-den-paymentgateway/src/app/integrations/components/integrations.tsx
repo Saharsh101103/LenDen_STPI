@@ -96,11 +96,11 @@ export default function Integrations() {
 
         setUser(session.user);
         
-        const KYC_Status = await axios.get(`http://localhost:8000/user/check_kyc?email=${session.user.email}`);
+        const KYC_Status = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/check_kyc?email=${session.user.email}`);
         setKYC(KYC_Status.data.message);
 
         if (!KYC) {
-          const { data } = await axios.get(`http://localhost:8000/integration/get_integration?email=${session.user.email}`);
+          const { data } = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/integration/get_integration?email=${session.user.email}`);
           setIntegrations(data);
           setEmail(session.user.email)
           console.log(data);
@@ -132,8 +132,8 @@ export default function Integrations() {
   const isSubmitting = form.formState.isSubmitting;
 
   const handleDelete = async(BusinessName : string) => {
-    const response = await axios.delete(`http://localhost:8000/integration/delete_integration?businessName=${BusinessName}`);
-    const { data } = await axios.get(`http://localhost:8000/integration/get_integration?email=${email}`);
+    const response = await axios.delete(`${process.env.NEXT_PUBLIC_BACKEND_URL}/integration/delete_integration?businessName=${BusinessName}`);
+    const { data } = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/integration/get_integration?email=${email}`);
           setIntegrations(data);
   }
 
@@ -141,7 +141,7 @@ export default function Integrations() {
     console.log("onSubmit called with data:", data); // Debugging
     
       try {
-        const response = await axios.post('http://localhost:8000/integration/create_integration', {
+        const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/integration/create_integration`, {
           email: email,
           businessName: data.businessName,
           domain: data.domain,
@@ -156,7 +156,7 @@ export default function Integrations() {
             variant: "default",
           });
 
-          const { data } = await axios.get(`http://localhost:8000/integration/get_integration?email=${email}`);
+          const { data } = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/integration/get_integration?email=${email}`);
           setIntegrations(data);
         }
         else if(response.status === 200 && response.data.message === "Integration with same Business already exists" ){
@@ -317,7 +317,7 @@ export default function Integrations() {
                           </div>
                           <CopyToClipboardButton text={content.xsecret} />
                         </div>
-                        <DialogFooter className="sm:justify-start">
+                        <DialogFooter className="justify-end">
                           <DialogClose asChild>
                             <Button type="button" variant="secondary">
                               Close

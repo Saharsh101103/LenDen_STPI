@@ -65,7 +65,7 @@ function Page() {
     console.log("onSubmit called with data:", data); // Debugging
     if (data.tnc) {
       try {
-        const response = await axios.post('http://localhost:8000/user/create_user', {
+        const response = await axios.post('${process.env.NEXT_PUBLIC_BACKEND_URL}/user/create_user', {
           email: user?.email,
           name: data.name,
           contact: data.contact,

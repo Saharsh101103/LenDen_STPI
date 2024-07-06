@@ -74,7 +74,7 @@ export function KYCForm() {
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     if (data.tnc) {
       try {
-        const user = await axios.post('http://localhost:8000/user/create_user', {
+        const user = await axios.post('${process.env.NEXT_PUBLIC_BACKED_URL}/user/create_user', {
           "email": data.email,
           "password": data.password,
           "name": data.name,
