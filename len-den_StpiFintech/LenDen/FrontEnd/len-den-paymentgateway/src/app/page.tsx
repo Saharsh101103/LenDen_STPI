@@ -158,7 +158,7 @@ export default async function Page() {
               <div className="flex justify-center gap-2">
                 <Link
                   className={buttonVariants({ variant: "secondary" })}
-                  href="/auth/sign-up"
+                  href="/auth/signup"
                 >
                   Sign Up
                 </Link>
@@ -190,7 +190,7 @@ export default async function Page() {
                     variant: "secondary",
                     className: "w-fit",
                   })}
-                  href="/auth/sign-up"
+                  href="/auth/signup"
                 >
                   Create Account
                 </Link>
