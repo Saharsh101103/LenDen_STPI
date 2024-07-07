@@ -32,13 +32,7 @@ export default function MainNav({
       >
         Overview
       </Link>
-      <Link
-        href="/customers"
-        className={classCustomers}
-
-      >
-        Customers
-      </Link>
+      
       <Link
         href="/integrations"
         className={classIntegrations}

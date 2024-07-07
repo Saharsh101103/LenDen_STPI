@@ -1,11 +1,12 @@
 import React from 'react'
-import Payments from './components/payments'
+import Refunds from './components/Refunds'
+
 
 
 function page() {
   return (
     <div className='bg-primary-foreground min-h-screen'>
-      <Payments/>
+      <Refunds/>
     </div>
   )
 }

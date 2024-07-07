@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
@@ -21,31 +21,29 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton"; // Import Skeleton component
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "@/components/ui/use-toast";
 
-interface SubscriptionProps {
+interface PayoutProps {
   businessName: string;
-  orderId: string;
-  planId: string;
+  payoutId: string;
   customerName: string;
   customerPhone: string;
-  payment_method: string;
-  orderAmount: number;
+  payout_method: string;
+  payoutAmount: number;
   status: string
-
 }
 
-
-
-export default function Subscriptions() {
+export default function Payouts() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [KYC, setKYC] = useState(false);
   const [email, setEmail] = useState<String | undefined>("");
-  const [subscriptions, setSubscriptions] = useState<SubscriptionProps[]>([]);
+  const [payouts, setPayouts] = useState<PayoutProps[]>([]);
+  const [loading, setLoading] = useState(true); // Loading state
 
   useEffect(() => {
     const getSession = async () => {
@@ -68,11 +66,11 @@ export default function Subscriptions() {
 
         if (!KYC) {
           const { data } = await axios.get(
-            `${process.env.NEXT_PUBLIC_BACKEND_URL}/recurring/get_orders?email=${session.user.email}`
+            `${process.env.NEXT_PUBLIC_BACKEND_URL}/payout/get_orders?email=${session.user.email}`
           );
-          setSubscriptions(data);
+          setPayouts(data);
           setEmail(session.user.email);
-          console.log(data);
+          setLoading(false); // Set loading to false after data is fetched
         }
 
         supabase.auth.onAuthStateChange((_event, session) => {
@@ -84,29 +82,23 @@ export default function Subscriptions() {
         });
       } catch (error) {
         console.error("Error fetching session or integrations:", error);
+        setLoading(false); // Set loading to false in case of error
       }
     };
 
     getSession();
   }, [router, KYC]);
 
-
-
-
-
   return (
     <Card className="bg-primary-foreground text-primary min-h-screen pt-14">
       <CardHeader>
         <div className="flex justify-between items-center">
           <div>
-            <CardTitle>Subscriptions</CardTitle>
+            <CardTitle>Payouts</CardTitle>
             <CardDescription className="text-secondary">
-              See all subscriptions linked to your account.
+              See all payouts linked to your account.
             </CardDescription>
           </div>
-          
-          
-          
         </div>
       </CardHeader>
       <CardContent>
@@ -115,50 +107,56 @@ export default function Subscriptions() {
             <TableRow>
               <TableHead className="text-secondary">Business Name</TableHead>
               <TableHead className="text-secondary">Order ID</TableHead>
-              <TableHead className="text-secondary">Plan</TableHead>
               <TableHead className="text-secondary">Customer</TableHead>
               <TableHead className="text-secondary">Contact</TableHead>
-              <TableHead className="text-secondary">Subscription Method</TableHead>
               <TableHead className="text-secondary">Order Amount</TableHead>
               <TableHead className="text-secondary">Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {subscriptions.length > 0 ? (
-              subscriptions.map((content, index) => (
-                <TableRow key={index}>
-                  <TableCell className="font-medium">
-                    {content.businessName}
-                  </TableCell>
-                  <TableCell className=" md:table-cell">
-                    {content.orderId}
-                  </TableCell>
-                  <TableCell className=" md:table-cell">
-                    {content.planId}
-                  </TableCell>
-                  <TableCell className=" md:table-cell">
-                    {content.customerName}
-                  </TableCell>
-                  <TableCell>{content.customerPhone}</TableCell>
-                  <TableCell>{content.payment_method}</TableCell>
-                  <TableCell>{content.orderAmount}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant="outline"
-                      typeof="link"
-                      className="bg-primary"
-                    >
-                      {content.status}
-                    </Badge>
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
+            {loading ? (
+              // Render skeleton loaders while loading
               <TableRow>
-                <TableCell colSpan={5} className="text-center">
-                All subscriptions made to any of your businesses will appear here.
+                <TableCell colSpan={6}>
+                  <Skeleton className="h-10 w-full mb-4" />
+                  <Skeleton className="h-10 w-full mb-4" />
+                  <Skeleton className="h-10 w-full mb-4" />
                 </TableCell>
               </TableRow>
+            ) : (
+              // Render actual data once loaded
+              payouts.length > 0 ? (
+                payouts.map((content, index) => (
+                  <TableRow key={index}>
+                    <TableCell className="font-medium">
+                      {content.businessName}
+                    </TableCell>
+                    <TableCell className=" md:table-cell">
+                      {content.payoutId}
+                    </TableCell>
+                    <TableCell className=" md:table-cell">
+                      {content.customerName}
+                    </TableCell>
+                    <TableCell>{content.customerPhone}</TableCell>
+                    <TableCell>{content.payoutAmount}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="outline"
+                        typeof="link"
+                        className="bg-primary"
+                      >
+                        {content.status}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center">
+                    All payouts made from any of your businesses will appear here.
+                  </TableCell>
+                </TableRow>
+              )
             )}
           </TableBody>
         </Table>

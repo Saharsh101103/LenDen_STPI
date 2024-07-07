@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
@@ -21,10 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "@/components/ui/use-toast";
+import { Skeleton } from "@/components/ui/skeleton"; // Import the skeleton component
 
 interface PaymentProps {
   businessName: string;
@@ -33,18 +30,16 @@ interface PaymentProps {
   customerPhone: string;
   payment_method: string;
   orderAmount: number;
-  status: string
-
+  status: string;
 }
-
-
 
 export default function Payments() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [KYC, setKYC] = useState(false);
-  const [email, setEmail] = useState<String | undefined>("");
+  const [email, setEmail] = useState<string | undefined>("");
   const [payments, setPayments] = useState<PaymentProps[]>([]);
+  const [loading, setLoading] = useState(true); // Loading state
 
   useEffect(() => {
     const getSession = async () => {
@@ -65,14 +60,13 @@ export default function Payments() {
         );
         setKYC(KYC_Status.data.message);
 
-        if (!KYC) {
-          const { data } = await axios.get(
-            `${process.env.NEXT_PUBLIC_BACKEND_URL}/payment/get_orders?email=${session.user.email}`
-          );
-          setPayments(data);
-          setEmail(session.user.email);
-          console.log(data);
-        }
+        const { data } = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/payment/get_orders?email=${session.user.email}`
+        );
+        setPayments(data);
+        setEmail(session.user.email);
+        setLoading(false); // End loading after data is fetched
+        console.log(data);
 
         supabase.auth.onAuthStateChange((_event, session) => {
           if (!session) {
@@ -83,15 +77,12 @@ export default function Payments() {
         });
       } catch (error) {
         console.error("Error fetching session or integrations:", error);
+        setLoading(false); // End loading in case of error
       }
     };
 
     getSession();
-  }, [router, KYC]);
-
-
-
-
+  }, [router]);
 
   return (
     <Card className="bg-primary-foreground text-primary min-h-screen pt-14">
@@ -103,9 +94,6 @@ export default function Payments() {
               See all payments linked to your account.
             </CardDescription>
           </div>
-          
-          
-          
         </div>
       </CardHeader>
       <CardContent>
@@ -122,27 +110,29 @@ export default function Payments() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {payments.length > 0 ? (
+            {loading ? (
+              Array.from({ length: 5 }).map((_, index) => (
+                <TableRow key={index}>
+                  <TableCell><Skeleton className="h-4 w-full" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-full" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-full" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-full" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-full" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-full" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-full" /></TableCell>
+                </TableRow>
+              ))
+            ) : payments.length > 0 ? (
               payments.map((content, index) => (
                 <TableRow key={index}>
-                  <TableCell className="font-medium">
-                    {content.businessName}
-                  </TableCell>
-                  <TableCell className=" md:table-cell">
-                    {content.orderId}
-                  </TableCell>
-                  <TableCell className=" md:table-cell">
-                    {content.customerName}
-                  </TableCell>
+                  <TableCell className="font-medium">{content.businessName}</TableCell>
+                  <TableCell className="md:table-cell">{content.orderId}</TableCell>
+                  <TableCell className="md:table-cell">{content.customerName}</TableCell>
                   <TableCell>{content.customerPhone}</TableCell>
                   <TableCell>{content.payment_method}</TableCell>
                   <TableCell>{content.orderAmount}</TableCell>
                   <TableCell>
-                    <Badge
-                      variant="outline"
-                      typeof="link"
-                      className="bg-primary"
-                    >
+                    <Badge variant="outline" typeof="link" className="bg-primary">
                       {content.status}
                     </Badge>
                   </TableCell>
@@ -150,7 +140,7 @@ export default function Payments() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={5} className="text-center">
+                <TableCell colSpan={7} className="text-center">
                   All payments made to any of your businesses will appear here.
                 </TableCell>
               </TableRow>
