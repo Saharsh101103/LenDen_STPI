@@ -44,7 +44,7 @@ export function SigninForm() {
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `http://localhost:3000/dashboard`,
+        redirectTo: `/dashboard`,
       },
     })
   }
@@ -53,7 +53,7 @@ export function SigninForm() {
     await supabase.auth.signInWithOAuth({
       provider: 'github',
       options: {
-        redirectTo: `http://localhost:3000/dashboard`,
+        redirectTo: `/dashboard`,
       },
     })  
   }
