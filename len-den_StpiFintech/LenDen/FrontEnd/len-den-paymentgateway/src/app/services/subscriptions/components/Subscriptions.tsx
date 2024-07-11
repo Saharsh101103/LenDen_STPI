@@ -22,10 +22,6 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton"; // Import Skeleton component
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "@/components/ui/use-toast";
 
 interface SubscriptionProps {
   businessName: string;
@@ -42,9 +38,10 @@ export default function Subscriptions() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [KYC, setKYC] = useState(false);
-  const [email, setEmail] = useState<String | undefined>("");
+  const [email, setEmail] = useState<string | undefined>("");
   const [subscriptions, setSubscriptions] = useState<SubscriptionProps[]>([]);
   const [loading, setLoading] = useState(true); // Loading state
+  const [error, setError] = useState<string | null>(null); // Error state
 
   useEffect(() => {
     const getSession = async () => {
@@ -65,7 +62,7 @@ export default function Subscriptions() {
         );
         setKYC(KYC_Status.data.message);
 
-        if (!KYC) {
+        if (KYC_Status.data.message) {
           const { data } = await axios.get(
             `${process.env.NEXT_PUBLIC_BACKEND_URL}/recurring/get_orders?email=${session.user.email}`
           );
@@ -83,6 +80,7 @@ export default function Subscriptions() {
         });
       } catch (error) {
         console.error("Error fetching session or subscriptions:", error);
+        setError("Failed to load data. Please try again later."); // Set error message
         setLoading(false); // Set loading to false in case of error
       }
     };
@@ -103,6 +101,11 @@ export default function Subscriptions() {
         </div>
       </CardHeader>
       <CardContent>
+        {error && (
+          <div className="text-red-500 mb-4">
+            {error}
+          </div>
+        )}
         <Table>
           <TableHeader>
             <TableRow>

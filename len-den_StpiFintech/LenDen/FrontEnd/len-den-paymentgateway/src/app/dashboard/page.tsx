@@ -3,25 +3,32 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
-import { User } from '@supabase/supabase-js';
+import axios from 'axios';
 import SignOutButton from '@/components/SignoutButton';
-
+import KycAlert from '@/components/kycAlert';
+import { Skeleton } from '@/components/ui/skeleton'; // Import the skeleton component
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import Overview from './components/overview';
 import RecentSales from './components/recent-sales';
-import axios from 'axios';
-import KycAlert from '@/components/kycAlert';
-import { Skeleton } from '@/components/ui/skeleton'; // Import the skeleton component
+import { User } from '@supabase/supabase-js';
 
-const Dashboard = () => {
+interface Order {
+  id: string;
+  customerName: string;
+  customerEmail: string;
+  orderAmount: number;
+}
+
+
+const Dashboard: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [orders, setOrders] = useState<any[]>([]);
-  const [paymentAmount, setPaymentAmount] = useState("0");
-  const [payoutAmount, setPayoutAmount] = useState("0");
-  const [refundAmount, setRefundAmount] = useState("0");
-  const [orderCount, setOrderCount] = useState(0);
-  const [KYC, setKYC] = useState(false);
-  const [loading, setLoading] = useState(true); // Loading state
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [paymentAmount, setPaymentAmount] = useState<string>("0");
+  const [payoutAmount, setPayoutAmount] = useState<string>("0");
+  const [refundAmount, setRefundAmount] = useState<string>("0");
+  const [orderCount, setOrderCount] = useState<number>(0);
+  const [KYC, setKYC] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true); // Loading state
   const router = useRouter();
 
   useEffect(() => {
@@ -35,18 +42,19 @@ const Dashboard = () => {
 
         setUser(session.user);
 
-        const KYC_Status = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/check_kyc?email=${session.user.email}`);
+        const [KYC_Status, userDetails, orderCountData, ordersData] = await Promise.all([
+          axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/check_kyc?email=${session.user.email}`),
+          axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/get_user?email=${session.user.email}`),
+          axios.get<number>(`${process.env.NEXT_PUBLIC_BACKEND_URL}/orderCount?email=${session.user.email}`),
+          axios.get<Order[]>(`${process.env.NEXT_PUBLIC_BACKEND_URL}/payment/get_orders?email=${session.user.email}`),
+        ]);
+
         setKYC(KYC_Status.data.message);
-
-        const userDetails = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/get_user?email=${session.user.email}`);
-        const orderCount = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/orderCount?email=${session.user.email}`);
-        const orders = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/payment/get_orders?email=${session.user.email}`);
-
-        setOrders(orders.data);
         setPaymentAmount(userDetails.data.payment_amount);
         setPayoutAmount(userDetails.data.payout_amount);
         setRefundAmount(userDetails.data.refund_amount);
-        setOrderCount(orderCount.data);
+        setOrderCount(orderCountData.data);
+        setOrders(ordersData.data);
         
         setLoading(false); // Set loading to false after all data is fetched
       } catch (error) {

@@ -1,8 +1,10 @@
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "./ui/button";
 import { toast } from "./ui/use-toast";
+import { useRouter } from "next/navigation";
 
 const SignOutButton = () => {
+  const router = useRouter()
     const handleSignOut = async () => {
       const { error } = await supabase.auth.signOut();
       if (error) {
@@ -18,6 +20,7 @@ const SignOutButton = () => {
               description: ":)",
               variant: "destructive",
             })
+          router.push('/auth/login');
         }
     };
   

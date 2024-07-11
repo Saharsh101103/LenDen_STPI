@@ -19,6 +19,7 @@ import { supabase } from '@/lib/supabaseClient';
 import axios from "axios"
 import { useRouter } from 'next/navigation';
 import { Icons } from "./ui/icons"
+import Link from "next/link"
 
 
 // Define the schema for form validation
@@ -139,7 +140,7 @@ const { error } = await supabase.auth.signInWithPassword({ email: data.email , p
           </span>
         </div>
       </div>
-      <div className="flex gap-4 mt-3">
+      <div className="flex gap-4 m-3">
         <Button className="w-full" onClick={githubSignIn} variant="secondary" type="button">
           <Icons.gitHub className="mr-2 h-4 w-4" />
           GitHub
@@ -149,6 +150,24 @@ const { error } = await supabase.auth.signInWithPassword({ email: data.email , p
           Google
         </Button>
       </div>
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t" />
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-background px-2 text-muted-foreground">
+            New user?
+          </span>
+        </div>
+      </div>
+        <Link href={"/auth/signup"}>
+      <div className="flex gap-4 m-3">
+        <Button className="w-full"  variant="secondary" type="button">
+          Create Account
+        </Button>
+      </div>
+        </Link>
+      
       </form>
     </Form>
   )

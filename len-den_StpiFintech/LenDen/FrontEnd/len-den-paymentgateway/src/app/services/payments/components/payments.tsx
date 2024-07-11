@@ -21,7 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton"; // Import the skeleton component
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface PaymentProps {
   businessName: string;
@@ -39,7 +39,7 @@ export default function Payments() {
   const [KYC, setKYC] = useState(false);
   const [email, setEmail] = useState<string | undefined>("");
   const [payments, setPayments] = useState<PaymentProps[]>([]);
-  const [loading, setLoading] = useState(true); // Loading state
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const getSession = async () => {
@@ -54,6 +54,7 @@ export default function Payments() {
         }
 
         setUser(session.user);
+        setEmail(session.user.email);
 
         const KYC_Status = await axios.get(
           `${process.env.NEXT_PUBLIC_BACKEND_URL}/user/check_kyc?email=${session.user.email}`
@@ -64,9 +65,7 @@ export default function Payments() {
           `${process.env.NEXT_PUBLIC_BACKEND_URL}/payment/get_orders?email=${session.user.email}`
         );
         setPayments(data);
-        setEmail(session.user.email);
-        setLoading(false); // End loading after data is fetched
-        console.log(data);
+        setLoading(false);
 
         supabase.auth.onAuthStateChange((_event, session) => {
           if (!session) {
@@ -77,7 +76,7 @@ export default function Payments() {
         });
       } catch (error) {
         console.error("Error fetching session or integrations:", error);
-        setLoading(false); // End loading in case of error
+        setLoading(false);
       }
     };
 
@@ -123,17 +122,17 @@ export default function Payments() {
                 </TableRow>
               ))
             ) : payments.length > 0 ? (
-              payments.map((content, index) => (
+              payments.map((payment, index) => (
                 <TableRow key={index}>
-                  <TableCell className="font-medium">{content.businessName}</TableCell>
-                  <TableCell className="md:table-cell">{content.orderId}</TableCell>
-                  <TableCell className="md:table-cell">{content.customerName}</TableCell>
-                  <TableCell>{content.customerPhone}</TableCell>
-                  <TableCell>{content.payment_method}</TableCell>
-                  <TableCell>{content.orderAmount}</TableCell>
+                  <TableCell className="font-medium">{payment.businessName}</TableCell>
+                  <TableCell className="md:table-cell">{payment.orderId}</TableCell>
+                  <TableCell className="md:table-cell">{payment.customerName}</TableCell>
+                  <TableCell>{payment.customerPhone}</TableCell>
+                  <TableCell>{payment.payment_method}</TableCell>
+                  <TableCell>{payment.orderAmount}</TableCell>
                   <TableCell>
                     <Badge variant="outline" typeof="link" className="bg-primary">
-                      {content.status}
+                      {payment.status}
                     </Badge>
                   </TableCell>
                 </TableRow>

@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -74,31 +74,66 @@ export function KYCForm() {
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     if (data.tnc) {
       try {
-        const user = await axios.post('${process.env.NEXT_PUBLIC_BACKED_URL}/user/create_user', {
-          "email": data.email,
-          "password": data.password,
-          "name": data.name,
-          "contact": data.contact,
-          "panNumber": data.panNumber,
-          "aadharNumber": data.aadharNumber,
-          "accountNumber": data.accountNumber,
-          "ifsc": data.ifsc,
-          "upi": data.upi,
-          "isAdmin": false,
+        const existingUser = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/get_user`, {
+          params: { email: data.email }
         });
 
-        if (user.data.message.email === data.email) {
-          toast({
-            title: "Verification Successful",
-            description: "You can continue to integration",
-            variant: "default",
+        if (existingUser.status == 200) {
+          // User exists, update the user
+          const updatedUser = await axios.put(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/update_user`, {
+            "email": data.email,
+            "password": data.password,
+            "name": data.name,
+            "contact": data.contact,
+            "panNumber": data.panNumber,
+            "aadharNumber": data.aadharNumber,
+            "accountNumber": data.accountNumber,
+            "ifsc": data.ifsc,
+            "upi": data.upi,
+            "isAdmin": false,
           });
+
+          if (updatedUser.data.message.email === data.email) {
+            toast({
+              title: "Verification Successful",
+              description: "You can continue to integration.",
+              variant: "default",
+            });
+          } else {
+            toast({
+              title: "Verification Unsuccessful",
+              description: "Please try again",
+              variant: "destructive",
+            });
+          }
         } else {
-          toast({
-            title: "Verification Unsuccessful",
-            description: "Please try again",
-            variant: "destructive",
+          // User does not exist, create a new user
+          const newUser = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/create_user`, {
+            "email": data.email,
+            "password": data.password,
+            "name": data.name,
+            "contact": data.contact,
+            "panNumber": data.panNumber,
+            "aadharNumber": data.aadharNumber,
+            "accountNumber": data.accountNumber,
+            "ifsc": data.ifsc,
+            "upi": data.upi,
+            "isAdmin": false,
           });
+
+          if (newUser.data.message.email === data.email) {
+            toast({
+              title: "Verification Successful",
+              description: "You can continue to integration",
+              variant: "default",
+            });
+          } else {
+            toast({
+              title: "Verification Unsuccessful",
+              description: "Please try again",
+              variant: "destructive",
+            });
+          }
         }
       } catch (error) {
         toast({

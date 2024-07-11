@@ -1,21 +1,22 @@
 "use client";
 
+import React from "react";
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
 
 interface OverviewProps {
-  paymentAmount : number,
-  payoutAmount : number,
-  refundAmount : number
+  paymentAmount: number;
+  payoutAmount: number;
+  refundAmount: number;
 }
 
-const Overview: React.FC<OverviewProps> = ({ paymentAmount,payoutAmount,refundAmount }) => {
+const Overview: React.FC<OverviewProps> = ({ paymentAmount, payoutAmount, refundAmount }) => {
   const data = [
     {
       name: "Total Revenue",
       total: paymentAmount - payoutAmount - refundAmount,
     },
     {
-      name: "Payments Recieved",
+      name: "Payments Received",
       total: paymentAmount,
     },
     {
@@ -27,6 +28,7 @@ const Overview: React.FC<OverviewProps> = ({ paymentAmount,payoutAmount,refundAm
       total: refundAmount,
     },
   ];
+
   return (
     <ResponsiveContainer width="100%" height={350}>
       <BarChart data={data}>
@@ -42,7 +44,7 @@ const Overview: React.FC<OverviewProps> = ({ paymentAmount,payoutAmount,refundAm
           fontSize={12}
           tickLine={false}
           axisLine={false}
-          tickFormatter={(value: any) => `₹${value}`}
+          tickFormatter={(value) => `₹${value}`}
         />
         <Bar
           dataKey="total"

@@ -36,6 +36,23 @@ const FormSchema = z.object({
 
 export default function SignUp()  {
   const router = useRouter();
+  const googleSignIn = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `/dashboard`,
+      },
+    })
+  }
+
+  const githubSignIn = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: 'github',
+      options: {
+        redirectTo: `/dashboard`,
+      },
+    })  
+  }
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -176,27 +193,37 @@ export default function SignUp()  {
         </div>
         <div className="relative flex justify-center text-xs uppercase">
           <span className="bg-background px-2 text-muted-foreground">
-            Or
+            Or continue with
           </span>
         </div>
       </div>
-        <div className="text-center text-xs mt-2">
-          To sign in with google or github head to signin page
-        </div>
-        <div className="relative mt-2">
+      <div className="flex gap-4 m-3">
+        <Button className="w-full" onClick={githubSignIn} variant="secondary" type="button">
+          <Icons.gitHub className="mr-2 h-4 w-4" />
+          GitHub
+        </Button>
+        <Button className="w-full" variant="secondary" onClick={googleSignIn} type="button">
+          <Icons.google className="mr-2 h-4 w-4" />
+          Google
+        </Button>
+      </div>
+      <div className="relative">
         <div className="absolute inset-0 flex items-center">
           <span className="w-full border-t" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
           <span className="bg-background px-2 text-muted-foreground">
-            Or
+            Existing user?
           </span>
         </div>
       </div>
-      <div className="text-center text-xs mt-2">
-          Already have an account?
-        </div>
-        <Link href={"/auth/login"} className="flex justify-center items-center mt-2"><Button variant={"secondary"}>Sign-in</Button></Link>
+        <Link href={"/auth/signup"}>
+      <div className="flex gap-4 m-3">
+        <Button className="w-full"  variant="secondary" type="button">
+          Login
+        </Button>
+      </div>
+        </Link>
       </form>
     </Form>
     </div>

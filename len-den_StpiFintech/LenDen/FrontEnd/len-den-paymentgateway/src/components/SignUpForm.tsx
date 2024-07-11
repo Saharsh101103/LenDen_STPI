@@ -35,6 +35,23 @@ const FormSchema = z.object({
 // Define the SignupForm component
 export function SignupForm() {
   const router = useRouter();
+  const googleSignIn = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `/dashboard`,
+      },
+    })
+  }
+
+  const githubSignIn = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: 'github',
+      options: {
+        redirectTo: `/dashboard`,
+      },
+    })  
+  }
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -61,11 +78,21 @@ export function SignupForm() {
             })
             console.error("Supabase sign-up error:", error);
           } else {
-            toast({
-              title: "Signed-up successfully",
-              description: "Check your email, and verify",
-              variant: "default",
-            })
+            const res = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/create_user`,{email :data.email})
+            if(res.status == 200){
+              toast({
+                title: "Signed-up successfully",
+                description: "Check your email, and verify",
+                variant: "default",
+              })
+            }
+              else{
+                toast({
+                  title: "Sign-up failed",
+                  description: "Please try again",
+                  variant: "destructive",
+                })
+              }
             router.push('/auth/login');
           }
         }
@@ -159,33 +186,39 @@ export function SignupForm() {
             </>
           }</Button>
         </div>
-        <div className="relative">
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-background px-2 text-muted-foreground">
+            Or continue with
+          </span>
+        </div>
+      
+      <div className="flex gap-4 m-3">
+        <Button className="w-full" onClick={githubSignIn} variant="secondary" type="button">
+          <Icons.gitHub className="mr-2 h-4 w-4" />
+          GitHub
+        </Button>
+        <Button className="w-full" variant="secondary" onClick={googleSignIn} type="button">
+          <Icons.google className="mr-2 h-4 w-4" />
+          Google
+        </Button>
+      </div>
+      <div className="relative">
         <div className="absolute inset-0 flex items-center">
           <span className="w-full border-t" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
           <span className="bg-background px-2 text-muted-foreground">
-            Or
+            New user?
           </span>
         </div>
       </div>
-        <div className="text-center text-xs mt-2">
-          To sign in with google or github head to signin page
-        </div>
-        <div className="relative mt-2">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">
-            Or
-          </span>
-        </div>
+        <Link href={"/auth/signup"}>
+      <div className="flex gap-4 m-3">
+        <Button className="w-full"  variant="secondary" type="button">
+          Create Account
+        </Button>
       </div>
-      <div className="text-center text-xs mt-2">
-          Already have an account?
-        </div>
-        <Link href={"/auth/login"} className="flex justify-center items-center mt-2"><Button variant={"secondary"}>Sign-in</Button></Link>
+        </Link>
       </form>
     </Form>
   )

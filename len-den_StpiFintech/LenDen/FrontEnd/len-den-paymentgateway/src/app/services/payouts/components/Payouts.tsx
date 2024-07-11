@@ -44,6 +44,7 @@ export default function Payouts() {
   const [email, setEmail] = useState<String | undefined>("");
   const [payouts, setPayouts] = useState<PayoutProps[]>([]);
   const [loading, setLoading] = useState(true); // Loading state
+  const [error, setError] = useState<string | null>(null); // Error state
 
   useEffect(() => {
     const getSession = async () => {
@@ -82,6 +83,7 @@ export default function Payouts() {
         });
       } catch (error) {
         console.error("Error fetching session or integrations:", error);
+        setError("Failed to load data. Please try again later."); // Set error message
         setLoading(false); // Set loading to false in case of error
       }
     };
@@ -102,6 +104,11 @@ export default function Payouts() {
         </div>
       </CardHeader>
       <CardContent>
+        {error && (
+          <div className="text-red-500 mb-4">
+            {error}
+          </div>
+        )}
         <Table>
           <TableHeader>
             <TableRow>

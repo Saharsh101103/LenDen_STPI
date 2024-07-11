@@ -1,44 +1,30 @@
-"use client"
-import Link from "next/link"
+"use client";
 
-import { cn } from "@/lib/utils"
-import { usePathname } from "next/navigation"
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
-export default function MainNav({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLElement>) {
-  const params = usePathname()
-  const classDocs = cn({
-    ["text-sm font-medium text-muted-foreground transition-colors hover:text-primary"]: params != "/dashboard",
-    ["text-sm font-medium  transition-colors hover:text-primary"]: params === "/dashboard"
-  })
-  const classCustomers = cn({
-    ["text-sm font-medium text-muted-foreground transition-colors hover:text-primary"]: params != "/customers",
-    ["text-sm font-medium  transition-colors hover:text-primary"]: params === "/customers"
-  })
-  const classIntegrations  = cn({
-    ["text-sm font-medium text-muted-foreground transition-colors hover:text-primary"]: params != "/integrations",
-    ["text-sm font-medium  transition-colors hover:text-primary"]: params === "/integrations"
-  })
+import { cn } from "@/lib/utils";
+
+interface MainNavProps extends React.HTMLAttributes<HTMLElement> {}
+
+const MainNav: React.FC<MainNavProps> = ({ className, ...props }) => {
+  const pathname = usePathname();
+
+  const linkClasses = (path: string) =>
+    cn("text-sm font-medium transition-colors hover:text-primary", {
+      "text-muted-foreground": pathname !== path,
+    });
+
   return (
-    <nav
-      className={cn("flex items-center space-x-4 lg:space-x-6", className)}
-      {...props}
-    >
-      <Link
-        href="/dashboard"
-        className={classDocs}
-      >
+    <nav className={cn("flex items-center space-x-4 lg:space-x-6", className)} {...props}>
+      <Link href="/dashboard" className={linkClasses("/dashboard")}>
         Overview
       </Link>
-      
-      <Link
-        href="/integrations"
-        className={classIntegrations}
-      >
+      <Link href="/integrations" className={linkClasses("/integrations")}>
         Integrations
       </Link>
     </nav>
-  )
-}
+  );
+};
+
+export default MainNav;

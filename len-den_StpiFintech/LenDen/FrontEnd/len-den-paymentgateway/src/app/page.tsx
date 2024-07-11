@@ -5,8 +5,6 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import Image from "next/image";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Logo } from "@/components/Logo";
-import { motion } from "framer-motion";
-import { HeroHighlight, Highlight } from "@/components/ui/hero-highlight";
 import {
   Card,
   CardContent,

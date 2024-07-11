@@ -88,14 +88,14 @@ function Page() {
 
           if (response.data.email === user?.email) {
             toast({
-              title: "Verification Successful",
+              title: "Updated Successfully",
               description: "You can continue to integration.",
               variant: "default",
             });
             router.push('/dashboard');
           } else {
             toast({
-              title: "Verification Unsuccessful",
+              title: "Update failed",
               description: "Please try again",
               variant: "destructive",
             });
@@ -118,14 +118,14 @@ function Page() {
 
           if (response.data.email === user?.email) {
             toast({
-              title: "Verification Successful",
+              title: "Updated Successfully",
               description: "You can continue to integration",
               variant: "default",
             });
             router.push('/dashboard');
           } else {
             toast({
-              title: "Verification Unsuccessful",
+              title: "Update failed",
               description: "Please try again",
               variant: "destructive",
             });
