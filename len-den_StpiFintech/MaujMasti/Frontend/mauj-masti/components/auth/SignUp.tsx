@@ -1,23 +1,24 @@
-"use client";
-import React from "react";
-import { Label } from "../ui/label";
-import { Input } from "../ui/input";
-import { cn } from "@/lib/utils";
-import { z } from "zod";
-import { useForm, SubmitHandler } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { IconBrandGoogle } from "@tabler/icons-react";
-import { Button } from "../ui/button";
-import { toast } from "@/components/ui/use-toast";
-import { supabase } from '@/lib/supabaseClient';
+'use client';
+
+import React from 'react';
+import { Label } from '../ui/label';
+import { Input } from '../ui/input';
+import { cn } from '@/lib/utils';
+import { z } from 'zod';
+import { useForm, SubmitHandler } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { IconBrandGoogle } from '@tabler/icons-react';
+import { Button } from '../ui/button';
+import { toast } from '@/components/ui/use-toast';
 import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabaseClient'; // Import supabase client
 
 // Define your schema with zod
 const schema = z.object({
-  firstName: z.string().nonempty("First name is required"),
-  username: z.string().nonempty("Username is required"),
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters long"),
+  firstName: z.string().nonempty('First name is required'),
+  username: z.string().nonempty('Username is required'),
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(8, 'Password must be at least 8 characters long'),
 });
 
 // Define the form values type
@@ -36,32 +37,59 @@ export function SignupForm() {
 
   const onSubmit: SubmitHandler<SignupFormValues> = async (data) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: data.email,
-        password: data.password,
+      const { email, password } = data;
+      const { data: { user, session }, error } = await supabase.auth.signUp({
+        email,
+        password,
       });
-      if (error) {
-        toast({
-          title: "Sign-in failed",
-          description: error.message,
-          variant: "destructive",
-        });
-        console.error("Supabase sign-up error:", error.message);
-      } else {
-        toast({
-          title: "Signed-in successfully",
-          description: "Welcome back!",
-          variant: "default",
-        });
-        router.push('/dashboard');
+
+      if (error) throw error;
+
+      // Send additional data to your create_user endpoint
+      const response = await fetch('/api/create_user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ...data, userId: user?.id }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error);
       }
+
+      toast({
+        title: 'User added successfully',
+        description: 'Welcome!',
+        variant: 'default',
+        className: 'bg-primary',
+      });
+      router.push('/dashboard');
     } catch (error: any) {
       toast({
-        title: "Sign-in failed",
+        title: 'Sign-up failed',
         description: error.message,
-        variant: "destructive",
+        variant: 'destructive',
       });
-      console.error("Backend sign-up error:", error);
+      console.error('Error adding user:', error);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+      });
+      if (error) throw error;
+    } catch (error: any) {
+      toast({
+        title: 'Google Sign-in failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+      console.error('Error signing in with Google:', error);
     }
   };
 
@@ -71,7 +99,7 @@ export function SignupForm() {
         Welcome to Mauj Masti
       </h2>
       <p className="text-neutral-600 text-sm max-w-sm mt-2 dark:text-neutral-300">
-        SignUp to Mauj Masti.
+        Sign up to Mauj Masti.
       </p>
 
       <form className="my-8" onSubmit={handleSubmit(onSubmit)}>
@@ -83,7 +111,7 @@ export function SignupForm() {
               placeholder="Tyler"
               type="text"
               className="bg-secondary"
-              {...register("firstName")}
+              {...register('firstName')}
             />
             {errors.firstName && (
               <p className="text-red-600">{errors.firstName.message}</p>
@@ -91,26 +119,13 @@ export function SignupForm() {
           </LabelInputContainer>
         </div>
         <LabelInputContainer className="mb-4">
-          <Label htmlFor="username">Username</Label>
-          <Input
-            id="username"
-            placeholder="cooltyler34"
-            type="text"
-            className="bg-secondary"
-            {...register("username")}
-          />
-          {errors.username && (
-            <p className="text-red-600">{errors.username.message}</p>
-          )}
-        </LabelInputContainer>
-        <LabelInputContainer className="mb-4">
           <Label htmlFor="email">Email Address</Label>
           <Input
             id="email"
             placeholder="projectmayhem@fc.com"
             type="email"
             className="bg-secondary"
-            {...register("email")}
+            {...register('email')}
           />
           {errors.email && (
             <p className="text-red-600">{errors.email.message}</p>
@@ -123,10 +138,23 @@ export function SignupForm() {
             placeholder="••••••••"
             type="password"
             className="bg-secondary"
-            {...register("password")}
+            {...register('password')}
           />
           {errors.password && (
             <p className="text-red-600">{errors.password.message}</p>
+          )}
+        </LabelInputContainer>
+        <LabelInputContainer className="mb-4">
+          <Label htmlFor="username">Username</Label>
+          <Input
+            id="username"
+            placeholder="username"
+            type="text"
+            className="bg-secondary"
+            {...register('username')}
+          />
+          {errors.username && (
+            <p className="text-red-600">{errors.username.message}</p>
           )}
         </LabelInputContainer>
 
@@ -144,6 +172,7 @@ export function SignupForm() {
           <Button
             className="border relative group/btn flex space-x-2 items-center justify-start px-4 w-full text-black rounded-md h-10 font-medium shadow-input bg-gray-50 dark:bg-zinc-900 dark:shadow-[0px_0px_1px_1px_var(--neutral-800)]"
             type="button"
+            onClick={handleGoogleSignIn} // Add onClick event to handle Google Sign-In
           >
             <IconBrandGoogle className="h-4 w-4 text-neutral-800 dark:text-neutral-300" />
             <span className="text-neutral-700 dark:text-neutral-300 text-sm">
@@ -174,7 +203,7 @@ const LabelInputContainer = ({
   className?: string;
 }) => {
   return (
-    <div className={cn("flex flex-col space-y-2 w-full", className)}>
+    <div className={cn('flex flex-col space-y-2 w-full', className)}>
       {children}
     </div>
   );
