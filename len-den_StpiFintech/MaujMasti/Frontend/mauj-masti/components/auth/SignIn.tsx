@@ -11,78 +11,56 @@ import { IconBrandGoogle } from '@tabler/icons-react';
 import { Button } from '../ui/button';
 import { toast } from '@/components/ui/use-toast';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabaseClient'; // Import supabase client
 import Link from 'next/link';
+import { supabase } from '@/lib/supabaseClient'; // Import supabase client
 
 // Define your schema with zod
 const schema = z.object({
-  firstName: z.string().nonempty('First name is required'),
-  username: z.string().nonempty('Username is required'),
   email: z.string().email('Invalid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters long'),
 });
 
 // Define the form values type
-type SignupFormValues = z.infer<typeof schema>;
+type LoginFormValues = z.infer<typeof schema>;
 
-export function SignupForm() {
+export function LoginForm() {
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<SignupFormValues>({
+  } = useForm<LoginFormValues>({
     resolver: zodResolver(schema),
   });
 
   const router = useRouter();
 
-  const onSubmit: SubmitHandler<SignupFormValues> = async (data) => {
+  const onSubmit: SubmitHandler<LoginFormValues> = async (data) => {
     try {
       const { email, password } = data;
-      const { data: { user, session }, error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
 
       if (error) throw error;
 
-      // Send additional data to your create_user endpoint
-      const response = await fetch('/api/create_user', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ ...data, userId: user?.id }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error);
-      }
-
       toast({
-        title: 'User added successfully',
-        description: 'Welcome!',
+        title: 'Sign-in successful',
+        description: 'Welcome back!',
         variant: 'default',
         className: 'bg-primary',
       });
       router.push('/dashboard');
     } catch (error: any) {
       toast({
-        title: 'Sign-up failed',
+        title: 'Sign-in failed',
         description: error.message,
         variant: 'destructive',
       });
-      console.error('Error adding user:', error);
+      console.error('Error signing in:', error);
     }
   };
 
   const handleGoogleSignIn = async () => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-      });
+      const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
       if (error) throw error;
     } catch (error: any) {
       toast({
@@ -100,25 +78,10 @@ export function SignupForm() {
         Welcome to Mauj Masti
       </h2>
       <p className="text-neutral-600 text-sm max-w-sm mt-2 dark:text-neutral-300">
-        Sign up to Mauj Masti.
+        Sign in to Mauj Masti.
       </p>
 
       <form className="my-8" onSubmit={handleSubmit(onSubmit)}>
-        <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2 mb-4">
-          <LabelInputContainer>
-            <Label htmlFor="firstname">First name</Label>
-            <Input
-              id="firstname"
-              placeholder="Tyler"
-              type="text"
-              className="bg-secondary"
-              {...register('firstName')}
-            />
-            {errors.firstName && (
-              <p className="text-red-600">{errors.firstName.message}</p>
-            )}
-          </LabelInputContainer>
-        </div>
         <LabelInputContainer className="mb-4">
           <Label htmlFor="email">Email Address</Label>
           <Input
@@ -145,25 +108,12 @@ export function SignupForm() {
             <p className="text-red-600">{errors.password.message}</p>
           )}
         </LabelInputContainer>
-        <LabelInputContainer className="mb-4">
-          <Label htmlFor="username">Username</Label>
-          <Input
-            id="username"
-            placeholder="username"
-            type="text"
-            className="bg-secondary"
-            {...register('username')}
-          />
-          {errors.username && (
-            <p className="text-red-600">{errors.username.message}</p>
-          )}
-        </LabelInputContainer>
 
         <Button
           className="bg-gradient-to-br relative group/btn from-black dark:from-zinc-900 dark:to-zinc-900 to-neutral-600 block dark:bg-zinc-800 w-full text-white rounded-md h-10 font-medium shadow-[0px_1px_0px_0px_#ffffff40_inset,0px_-1px_0px_0px_#ffffff40_inset] dark:shadow-[0px_1px_0px_0px_var(--zinc-800)_inset,0px_-1px_0px_0px_var(--zinc-800)_inset]"
           type="submit"
         >
-          Sign up &rarr;
+          Sign in &rarr;
           <BottomGradient />
         </Button>
 
@@ -182,11 +132,12 @@ export function SignupForm() {
             <BottomGradient />
           </Button>
         </div>
+
         <div className="text-center mt-4">
           <p className="text-neutral-600 dark:text-neutral-300">
-            Existing user?{' '}
-            <Link className="text-blue-600 hover:underline dark:text-blue-400" href="/auth/sign-in">
-             Sign In
+            New user?{' '}
+            <Link className="text-blue-600 hover:underline dark:text-blue-400" href="/auth/sign-up">
+             Sign Up
             </Link>
           </p>
         </div>
