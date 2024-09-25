@@ -50,7 +50,7 @@ const customer_account: Account = {
 // Define a detailed TransactionBody interface
 interface TransactionBody {
     account_number: string;
-    ifsc: string; // Add this line
+    ifsc: string;
     transaction_type: "DEBIT" | "CREDIT";
     orderAmount: number;
     payment_method?: "DEBITCARD" | "CREDITCARD" | "UPI" | "NETBANKING";
@@ -67,21 +67,24 @@ interface TransactionBody {
 
 // Identify account based on account number
 function identify_account(body: TransactionBody): Account | null {
-    if (body.cc_num == user_account.cc_num || body.dc_num == user_account.dc_num || body.UPI == user_account.UPI || body.NB_username == user_account.NB_username || body.account_number == user_account.account_number) {
+    if (body.cc_num === user_account.cc_num || body.dc_num === user_account.dc_num || body.UPI === user_account.UPI || body.NB_username === user_account.NB_username || body.account_number === user_account.account_number) {
         return user_account;
-    } else if (body.cc_num == customer_account.cc_num || body.dc_num == customer_account.dc_num || body.UPI == customer_account.UPI || body.NB_username == customer_account.NB_username || body.account_number == customer_account.account_number) {
+    } else if (body.cc_num === customer_account.cc_num || body.dc_num === customer_account.dc_num || body.UPI === customer_account.UPI || body.NB_username === customer_account.NB_username || body.account_number === customer_account.account_number) {
         return customer_account;
     }
     return null;
 }
 
 export async function POST(req: NextRequest) {
+    // Read the request body only once
     const body = await req.json() as TransactionBody;
 
-    if (!body.transaction_type || (!body.NB_username && !body.UPI && !body.dc_num && !body.cc_num) || !body.orderAmount) {
+    // Validate required fields in the body
+    if (!body.transaction_type || (!body.NB_username && !body.UPI && !body.dc_num && !body.cc_num && (!body.account_number || !body.ifsc)) || !body.orderAmount) {
         return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
     }
 
+    // Call the appropriate handler based on the transaction type
     if (body.transaction_type === "DEBIT") {
         return handleDebit(body);
     } else if (body.transaction_type === "CREDIT") {
@@ -101,26 +104,24 @@ function handleDebit(body: TransactionBody) {
 
     const { payment_method, orderAmount, dc_num, cc_num, expiry, cvv, OTP, UPI, UPI_SUCCESS, NB_username, NB_password } = body;
 
-    // Check for sufficient balance in customer account before debiting
+    // Check for sufficient balance in the account before debiting
     if (orderAmount <= account.balance) {
         if (payment_method === "DEBITCARD" || payment_method === "CREDITCARD") {
             const cardNum = payment_method === "DEBITCARD" ? dc_num : cc_num;
 
-            if (cardNum && cardNum === account[payment_method === "DEBITCARD" ? "dc_num" : "cc_num"] &&
+            if (cardNum === account[payment_method === "DEBITCARD" ? "dc_num" : "cc_num"] &&
                 expiry === account.expiry && cvv === account.cvv && OTP === account.OTP) {
-                account.balance -= orderAmount; // Deduct from customer account
+                account.balance -= orderAmount; // Deduct from account
                 return NextResponse.json({ success: true, message: "Transaction Successful", account }, { status: 200 });
             }
         } else if (payment_method === "UPI") {
             if (UPI === account.UPI && UPI_SUCCESS) {
-                account.balance -= orderAmount; // Deduct from customer account
-                
+                account.balance -= orderAmount; // Deduct from account
                 return NextResponse.json({ success: true, message: "Transaction Successful", account }, { status: 200 });
             }
         } else if (payment_method === "NETBANKING") {
             if (NB_username === account.NB_username && NB_password === account.NB_password) {
-                account.balance -= orderAmount; // Deduct from customer account
-                
+                account.balance -= orderAmount; // Deduct from account
                 return NextResponse.json({ success: true, message: "Transaction Successful", account }, { status: 200 });
             }
         }
@@ -139,12 +140,11 @@ function handleCredit(body: TransactionBody) {
         return NextResponse.json({ message: "Account does not exist" }, { status: 404 });
     }
 
-    const { account_number, ifsc, orderAmount } = body as TransactionBody;
+    const { account_number, ifsc, orderAmount } = body;
 
     // Validate account and ifsc for crediting
     if (account_number === account.account_number && ifsc === account.ifsc) {
-        account.balance += orderAmount; // Add to customer account
-        
+        account.balance += orderAmount; // Add to account
         return NextResponse.json({ success: true, message: "Transaction Successful", account }, { status: 200 });
     } else {
         return NextResponse.json({ message: "Transaction failed, wrong credentials provided" }, { status: 400 });
@@ -152,7 +152,7 @@ function handleCredit(body: TransactionBody) {
 }
 
 export async function GET() {
-    // Initialize accounts with balance and empty transaction arrays
+    // Initialize accounts with balance
     const merchantAccount = {
         name: "Merchant",
         balance: user_account.balance,
