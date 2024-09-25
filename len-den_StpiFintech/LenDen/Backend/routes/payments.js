@@ -122,7 +122,7 @@ router.post("/process_order", async (req, res) => {
         // Mocking the payment processing
         //Connecting to bank to process the payement
         try {
-          let customeracc = await axios.post("http://localhost:9000/debit",{
+          let customeracc = await axios.post(process.env.BANK_URL,{
             "cc_num" : cc_num || "",
             "dc_num" : dc_num || "",
             "expiry": expiry || "",
@@ -133,16 +133,18 @@ router.post("/process_order", async (req, res) => {
             "NB_username" : Nb_username,
             "NB_password" : Nb_password, 
             "payment_method": payment_method,
-            "orderAmount" : order.orderAmount
+            "orderAmount" : order.orderAmount,
+            "transaction_type" : "DEBIT"
           })
           console.log(customeracc.data, "module 2 success")
     
           if(customeracc.data.message == 'Transaction Successfull'){
             console.log("prep mod 3")
-            let useracc = await axios.post("http://localhost:9000/credit",{
+            let useracc = await axios.post(process.env.BANK_URL,{
               "account_number" : decrypt(user.accountNumber),
               "ifsc" : decrypt(user.ifsc),
-              "orderAmount" : order.orderAmount
+              "orderAmount" : order.orderAmount,
+              "transaction_type" : "CREDIT"
             })
           console.log(useracc.data, "module 3 success")
           

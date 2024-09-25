@@ -21,20 +21,22 @@ cron.schedule('0 0 * * *', async () => {
       const user = await prisma.user.findFirst({
         where: {email: subscription.email}
       })
-      let customeracc = await axios.post("http://localhost:9000/debit",{
+      let customeracc = await axios.post(process.env.BANK_URL,{
         "UPI": UPI || "",
         "UPI_SUCCESS" : true,
         "payment_method": "UPI",
-        "orderAmount" : orderAmount
+        "orderAmount" : orderAmount,
+        "transaction_type" : "DEBIT"
       })
       console.log(customeracc.data, "module 2 success")
 
       if(customeracc.data.message == 'Transaction Successfull'){
         console.log("prep mod 3")
-        let useracc = await axios.post("http://localhost:9000/credit",{
+        let useracc = await axios.post(process.env.BANK_URL,{
           "account_number" : decrypt(user.accountNumber),
           "ifsc" : decrypt(user.ifsc),
-          "orderAmount" : orderAmount
+          "orderAmount" : orderAmount,
+          "transaction_type" : "CREDIT"
         })
       console.log(useracc.data, "module 3 success")
       
