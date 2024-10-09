@@ -69,21 +69,21 @@ const GameBoard: React.FC<GameBoardProps> = ({
     }, [isGameStarted, bombPositions]);
 
     return (
-        <div className="w-full max-w-xl mx-auto">
+        <div className="w-full max-w-2xl mx-auto">
             <div
-                 className="grid grid-cols-4 sm:grid-cols-6 gap-4 bg-gray-200 p-4 rounded-lg"
+                 className="grid grid-cols-4 sm:grid-cols-6 gap-4 bg-gray-200 p-4 rounded-lg items-center justify-center"
             >
                 {gameState.map((state, index) => (
                 <div
                     key={index}
                     className={`aspect-square rounded-full cursor-pointer
                                 w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24
-                                flex items-center justify-center
+                                flex items-center justify-center mx-auto my-auto
                                 ${
                                     state === "hidden"
                                         ? "bg-white border-2 border-gray-300"
                                         : state === "gem"
-                                        ? "bg-blue-500"
+                                        ? "bg-green-500"
                                         : "bg-red-500"
                                 }`}
                     onClick={() => handleCircleClick(index)}

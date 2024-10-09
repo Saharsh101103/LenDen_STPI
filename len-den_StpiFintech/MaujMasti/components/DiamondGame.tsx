@@ -149,7 +149,7 @@ const DiamondGame: React.FC = () => {
         </div>
 
         {/* Game Board and Status Section */}
-        <div className="w-full md:w-64 p-4 bg-gray-100 rounded-lg">
+        <div className="w-full w-fit p-4 bg-gray-100 rounded-lg">
           <GameBoard
             bombCount={parseInt(bombCount)}
             onSafeClick={handleSafeClick}
