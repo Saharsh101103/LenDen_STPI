@@ -1,12 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Search, Menu } from 'lucide-react'
+import { useAuth } from '@/hooks/useAuth'
+import { redirect, useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabaseClient'
 
 // Sample game data
 const games = [
@@ -19,10 +22,56 @@ const games = [
   // Add more games as needed
 ]
 
-export default function GamesDashboard() {
-  const [searchTerm, setSearchTerm] = useState('')
-  const [genreFilter, setGenreFilter] = useState('')
 
+
+export default function GamesDashboard() {
+  const router = useRouter();
+  const [isloading, setLoading] = useState(true);
+
+
+  useEffect(() => {
+    const checkUserStatus = async () => {
+      const response = await fetch('/api/check_user');
+      
+      // Check if the response is ok
+      if (!response.ok) {
+        console.error('Error fetching user status:', response);
+        const text = await response.text(); // Log the raw response text
+        console.log('Response Text:', text);
+        return; // Exit early if the response is not ok
+      }
+
+      try {
+        const userCheckData = await response.json(); // Safely parse JSON
+        
+        // Check if redirect is in the response
+        if (userCheckData.redirect) {
+          router.push(userCheckData.redirect); // Redirect based on API response
+        }
+      } catch (error) {
+        console.error('Error parsing JSON:', error);
+      }
+    };
+
+    checkUserStatus();
+  }, [router]);
+
+  
+
+
+  const { user, loading } = useAuth();
+
+  // If loading is true, the session is still being fetched
+  if (loading && isloading) {
+    return <div>Loading...</div>;
+  }
+
+  // Log user once loading is done
+  if (user) {
+    console.log("Logged in user:", user);
+  } else {
+    redirect('/auth')
+  }
 
   return (
     <div className="min-h-screen bg-gray-100">

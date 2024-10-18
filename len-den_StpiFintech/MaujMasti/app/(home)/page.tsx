@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion, useAnimation } from 'framer-motion'
 import { FaCoins, FaGamepad, FaMoneyBillWave, FaTrophy } from 'react-icons/fa'
 
+
 const useCoinCounter = (targetValue: number, duration: number = 2000) => {
   const [count, setCount] = useState(0)
 

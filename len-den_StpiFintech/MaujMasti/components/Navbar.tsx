@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { redirect, useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -15,41 +15,28 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Menu, X, DollarSign } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
+import { useAuth } from '@/hooks/useAuth';
+import { useUser } from '@/context/UserContext'
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [email, SetEmail] = useState("")
   const [balance, SetBalance] = useState(0)
   const router = useRouter()
-  const username = "EXAMPLE"
+  const currUser = useUser();
 
-  const handleLogout = () => {
-    // Implement logout logic here
-    console.log('Logging out...')
-    router.push('/login') // Redirect to login page after logout
-  }
+  const { user, loading } = useAuth();
   
-  useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      SetEmail(session?.user.email!)
-
-      if (!session) {
-        // Redirect if no session is found
-        router.push('/auth');
-      }
-    };
-
-    checkSession();
-
-    
-
-    // Optional: Listen for session changes
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      redirect('/');
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
+  };
+  
 
 
-    // Clean up the listener
-    
-  }, [router]);
 
   return (
     <nav className="bg-purple-900 text-white shadow-lg">
@@ -73,17 +60,17 @@ export default function Navbar() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src="/placeholder.svg?height=32&width=32" alt={username} />
-                    <AvatarFallback>{username.slice(0, 2).toUpperCase()}</AvatarFallback>
+                    <AvatarImage src="/placeholder.svg?height=32&width=32" alt={currUser?.username} />
+                    <AvatarFallback>{currUser?.username.slice(0, 2).toUpperCase()}</AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{username}</p>
+                    <p className="text-sm font-medium leading-none">{currUser?.username}</p>
                     <p className="text-xs leading-none text-muted-foreground">
-                      {email.toLowerCase()}
+                    {user?.email ?? 'No Email'}
                     </p>
                   </div>
                 </DropdownMenuLabel>

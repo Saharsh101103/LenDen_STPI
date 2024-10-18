@@ -1,14 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation'; // Use for redirection after successful login/signup
-import { supabase } from '@/lib/supabaseClient';  // Import your supabase client
+import { useRouter } from 'next/navigation'; 
+import { supabase } from '@/lib/supabaseClient';  
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { handleSignUp } from '@/components/auth/utils'; // Import your auth logic
+import { FaGoogle, FaDiscord } from 'react-icons/fa';
+import { Session } from '@supabase/supabase-js';
+import { User } from '@supabase/auth-js';
 
 const FloatingBubble = ({ delay = 0 }) => (
   <motion.div
@@ -31,18 +33,28 @@ const FloatingBubble = ({ delay = 0 }) => (
     }}
   />
 );
+const buttonVariants = {
+  rest: { scale: 1 },
+  hover: { scale: 1.05 },
+  tap: { scale: 0.95 },
+}
+
+const iconVariants = {
+  rest: { scale: 1 },
+  hover: { scale: 1.2, rotate: 5 },
+}
 
 export default function Component() {
   const [activeTab, setActiveTab] = useState('signin');
   const [bubbles, setBubbles] = useState<JSX.Element[]>([]);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState(''); // For signup
+  const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null); // Error handling
-  const router = useRouter();  // Move useRouter to the component
-
-  const [username, setUsername] = useState(''); // Username state for sign-up
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();  
+  const [username, setUsername] = useState('');
+  const [session, setSession] = useState<Session | null>(null);
 
   useEffect(() => {
     setBubbles(Array.from({ length: 10 }, (_, i) => (
@@ -50,7 +62,104 @@ export default function Component() {
     )));
   }, []);
 
-  // Sign in logic
+  useEffect(() => {
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (session) {
+          const user = session.user;
+          handleUserRow(user); // Insert a new row for the user when they log in
+          router.push('/dashboard'); // Redirect after login
+        }
+      }
+    );
+  
+    return () => {
+    };
+  }, [router]);
+  
+
+  const handleUserRow = async (user: User) => {
+    const { data, error } = await supabase
+      .from('users') // Your users table name
+      .select('id')
+      .eq('email', user.email);
+
+    if (!data?.length) {
+      await supabase
+        .from('users')
+        .insert({
+          email: user.email,
+          name: user.user_metadata.full_name || name, // Assuming name is returned or input during signup
+          username: user.user_metadata.username || username, // Assuming username is returned or set
+          cash: 0,
+          account_num: null,
+          ifsc: null
+        });
+    }
+  };
+
+  const handleUserSignUp = async () => {
+    setLoading(true);
+    setError(null);
+  
+    // Correctly access user from the response
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: name,
+          username: username,
+        },
+      },
+    });
+  
+    // If sign-up is successful, user will be inside data.session
+    if (data.session) {
+      const user = data.session.user; // Access user from session
+      await handleUserRow(user); // Insert new user into the database after signup
+      router.push('/dashboard');
+    }
+  
+    setLoading(false);
+  
+    if (error) {
+      setError(error.message);
+    }
+  };
+  
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `http://localhost:3000/dashboard`,
+      },
+    });
+  
+    // No session is immediately available; handle errors, if any
+    if (error) {
+      setError(error.message);
+    }
+  
+    setLoading(false);
+  };
+  
+  const handleDiscordSignIn = async () => {
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'discord',
+    });
+  
+    // No session is immediately available; handle errors, if any
+    if (error) {
+      setError(error.message);
+    }
+  
+    setLoading(false);
+  };
+  
+  
   const handleSignIn = async () => {
     setLoading(true);
     setError(null);
@@ -61,27 +170,8 @@ export default function Component() {
     setLoading(false);
     if (error) {
       setError(error.message);
-    } else {
-      // Redirect after successful login
-      router.push('/dashboard'); // Change to your desired route
     }
   };
-
-  // Sign up logic
-  const handleUserSignUp = async () => {
-    setLoading(true);
-    setError(null);
-    const { error } = await handleSignUp(email, password, name, username); // Removed router from utils
-    setLoading(false);
-
-    if (error) {
-      setError(error.toString);
-    } else {
-      router.push('/dashboard');  // Redirect after successful signup
-    }
-  };
-
-  // Sign in and sign up buttons disabled state
   const isButtonDisabled = loading || !email || !password;
 
   return (
@@ -133,6 +223,34 @@ export default function Component() {
                   <Button className="w-full" onClick={handleSignIn} disabled={isButtonDisabled}>
                     {loading ? 'Signing in...' : 'Sign In'}
                   </Button>
+                  <div className='flex flex-col gap-2'>
+                  <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap">
+                <Button
+                  className="w-full h-12 bg-white text-black hover:bg-gray-100 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600 transition-all duration-300 ease-in-out overflow-hidden relative"
+                  onClick={handleGoogleSignIn}
+                  disabled={loading}
+                >
+                  <motion.span className="absolute inset-0 bg-black/5 dark:bg-white/5" initial={{ scale: 0, opacity: 0 }} whileHover={{ scale: 2, opacity: 1 }} transition={{ duration: 0.5 }} />
+                  <motion.span className="relative z-10 flex items-center justify-center" variants={iconVariants}>
+                    <FaGoogle className="mr-2" />
+                    {loading ? 'Logging in...' : 'Login with Google'}
+                  </motion.span>
+                </Button>
+              </motion.div>
+              <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap">
+                <Button
+                  className="w-full h-12 bg-[#7289da] hover:bg-[#5e73bc] text-white transition-all duration-300 ease-in-out overflow-hidden relative"
+                  onClick={handleDiscordSignIn}
+                  disabled={loading}
+                >
+                  <motion.span className="absolute inset-0 bg-white/10" initial={{ scale: 0, opacity: 0 }} whileHover={{ scale: 2, opacity: 1 }} transition={{ duration: 0.5 }} />
+                  <motion.span className="relative z-10 flex items-center justify-center" variants={iconVariants}>
+                    <FaDiscord className="mr-2" />
+                    {loading ? 'Logging in...' : 'Login with Discord'}
+                  </motion.span>
+                </Button>
+              </motion.div>
+                  </div>
                 </TabsContent>
 
                 <TabsContent value="signup" className="space-y-4">
@@ -151,7 +269,7 @@ export default function Component() {
                     <Label htmlFor="signup-username" className="text-white">Username</Label>
                     <Input
                       id="signup-username"
-                      placeholder="Enter your username"
+                      placeholder="Choose a username"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
                     />
@@ -171,14 +289,40 @@ export default function Component() {
                     <Input
                       id="signup-password"
                       type="password"
-                      placeholder="Create a password"
+                      placeholder="Enter your password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                     />
                   </div>
                   <Button className="w-full" onClick={handleUserSignUp} disabled={isButtonDisabled}>
-                    {loading ? 'Signing up...' : 'Sign Up'}
+                    {loading ? 'Creating account...' : 'Sign Up'}
                   </Button>
+                  <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap">
+                <Button
+                  className="w-full h-12 bg-white text-black hover:bg-gray-100 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600 transition-all duration-300 ease-in-out overflow-hidden relative"
+                  onClick={handleGoogleSignIn}
+                  disabled={loading}
+                >
+                  <motion.span className="absolute inset-0 bg-black/5 dark:bg-white/5" initial={{ scale: 0, opacity: 0 }} whileHover={{ scale: 2, opacity: 1 }} transition={{ duration: 0.5 }} />
+                  <motion.span className="relative z-10 flex items-center justify-center" variants={iconVariants}>
+                    <FaGoogle className="mr-2" />
+                    {loading ? 'Logging in...' : 'Login with Google'}
+                  </motion.span>
+                </Button>
+              </motion.div>
+              <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap">
+                <Button
+                  className="w-full h-12 bg-[#7289da] hover:bg-[#5e73bc] text-white transition-all duration-300 ease-in-out overflow-hidden relative"
+                  onClick={handleDiscordSignIn}
+                  disabled={loading}
+                >
+                  <motion.span className="absolute inset-0 bg-white/10" initial={{ scale: 0, opacity: 0 }} whileHover={{ scale: 2, opacity: 1 }} transition={{ duration: 0.5 }} />
+                  <motion.span className="relative z-10 flex items-center justify-center" variants={iconVariants}>
+                    <FaDiscord className="mr-2" />
+                    {loading ? 'Logging in...' : 'Login with Discord'}
+                  </motion.span>
+                </Button>
+              </motion.div>
                 </TabsContent>
               </motion.div>
             </AnimatePresence>
