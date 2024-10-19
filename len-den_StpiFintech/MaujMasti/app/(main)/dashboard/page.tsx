@@ -2,14 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Search, Menu } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { redirect, useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabaseClient'
+import axios from 'axios'
 
 // Sample game data
 const games = [
@@ -26,40 +23,43 @@ const games = [
 
 export default function GamesDashboard() {
   const router = useRouter();
+  const { user, loading, session } = useAuth();
   const [isloading, setLoading] = useState(true);
-
+  const [user_email, setUserEmail] = useState<string | null>(null);
 
   useEffect(() => {
-    const checkUserStatus = async () => {
-      const response = await fetch('/api/check_user');
-      
-      // Check if the response is ok
-      if (!response.ok) {
-        console.error('Error fetching user status:', response);
-        const text = await response.text(); // Log the raw response text
-        console.log('Response Text:', text);
-        return; // Exit early if the response is not ok
-      }
+    // Wait for user data to be available
+    
+    if (session) {
+      setUserEmail(session.email!);  // Set user email once available
+      setLoading(false);  // Stop loading when user data is available
+    }
+  }, [user]);
 
+  useEffect(() => {
+    console.log("Loading state:", loading);
+    console.log("Session email:", session?.email);
+    console.log("User state:", user);
+  const check = async()=>{
+
+    if (!loading && session?.email) {
       try {
-        const userCheckData = await response.json(); // Safely parse JSON
+        const res = await axios.get(`/api/user-reg?email=${session.email}`)
+        console.log("user found", res.data)
         
-        // Check if redirect is in the response
-        if (userCheckData.redirect) {
-          router.push(userCheckData.redirect); // Redirect based on API response
-        }
       } catch (error) {
-        console.error('Error parsing JSON:', error);
+          console.log("User not found, redirecting to verify");
+          router.push(`/verify?email=${session.email}`); // Redirect to verify
       }
-    };
-
-    checkUserStatus();
-  }, [router]);
+    }
+  }
+  check()
+  }, [user, loading, session?.email]);
+  
 
   
 
 
-  const { user, loading } = useAuth();
 
   // If loading is true, the session is still being fetched
   if (loading && isloading) {
@@ -67,8 +67,8 @@ export default function GamesDashboard() {
   }
 
   // Log user once loading is done
-  if (user) {
-    console.log("Logged in user:", user);
+  if (session) {
+    console.log("Logged in user:", session);
   } else {
     redirect('/auth')
   }

@@ -149,6 +149,9 @@ export default function Component() {
     setLoading(true);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'discord',
+      options: {
+        redirectTo: `http://localhost:3000/dashboard`,
+      },
     });
   
     // No session is immediately available; handle errors, if any

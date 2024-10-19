@@ -1,62 +1,72 @@
 // hooks/useAuth.js
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import {User} from '@supabase/auth-js'
+import { User } from '@supabase/auth-js';
+import axios from 'axios';
+
+interface User_Details {
+  id: number;
+  email: string;
+  name: string | null;
+  username: string;
+  cash: number;
+  account_num: string | null;
+  ifsc: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export const useAuth = () => {
-  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<User | null>(null);
+  const [user, setUser] = useState<User_Details | null | undefined>(null);
   const [loading, setLoading] = useState(true);
 
+  // Fetch user session on component mount
   useEffect(() => {
     const fetchSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
+      setSession(session?.user ?? null);
       setLoading(false);
     };
-  
+
     fetchSession();
-  
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Session:', session);
-      setUser(session?.user ?? null);
-  
-      if (session?.user) {
-        const { email, user_metadata: { user_name } } = session.user;
-  
-        const { data: existingUser, error: fetchError } = await supabase
-          .from('user')
-          .select('*')
-          .eq('email', email)
-          .single();
-  
-        if (fetchError) {
-          console.error('Error fetching user:', fetchError);
-          return;
-        }
-  
-        if (!existingUser) {
-          const { error: insertError } = await supabase
-            .from('user')
-            .insert([{
-              email,
-              name: user_name || 'Anonymous',
-              username: user_name || 'User_' + Math.random().toString(36).substring(7),
-              cash: 0
-            }]);
-  
-          if (insertError) {
-            console.error('Error inserting user:', insertError);
-          } else {
-            console.log('New user inserted successfully');
-          }
-        }
-      }
-    });
-  
+
     // Cleanup listener
-    return () => {
-      authListener.subscription?.unsubscribe();
-    };
+    return () => {};
   }, []);
-  
-  return { user, loading };
+
+  // Fetch user details based on email
+  const fetchUserDetails = async (email: string | undefined) => {
+    if (!email) {
+      setUser(null);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await axios.get(`/api/user-reg?email=${email}`);
+
+      if (response.status === 200) {
+        const userDetails = response.data.user;
+        setUser(userDetails);
+      } else {
+        setUser(null);  // Handle non-200 responses
+      }
+    } catch (error) {
+      console.error("Error fetching user details:", error); // Improved error logging
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch user details when session email changes
+  useEffect(() => {
+    if (session?.email) {
+      fetchUserDetails(session.email);
+    }
+  }, [session?.email]);
+
+  return { user, loading, session };
 };
