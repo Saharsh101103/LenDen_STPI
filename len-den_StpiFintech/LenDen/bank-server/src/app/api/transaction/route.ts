@@ -112,17 +112,17 @@ function handleDebit(body: TransactionBody) {
             if (cardNum === account[payment_method === "DEBITCARD" ? "dc_num" : "cc_num"] &&
                 expiry === account.expiry && cvv === account.cvv && OTP === account.OTP) {
                 account.balance -= orderAmount; // Deduct from account
-                return NextResponse.json({ success: true, message: "Transaction Successful", account }, { status: 200 });
+                return NextResponse.json({ success: true, message: "Transaction Successfull", account }, { status: 200 });
             }
         } else if (payment_method === "UPI") {
             if (UPI === account.UPI && UPI_SUCCESS) {
                 account.balance -= orderAmount; // Deduct from account
-                return NextResponse.json({ success: true, message: "Transaction Successful", account }, { status: 200 });
+                return NextResponse.json({ success: true, message: "Transaction Successfull", account }, { status: 200 });
             }
         } else if (payment_method === "NETBANKING") {
             if (NB_username === account.NB_username && NB_password === account.NB_password) {
                 account.balance -= orderAmount; // Deduct from account
-                return NextResponse.json({ success: true, message: "Transaction Successful", account }, { status: 200 });
+                return NextResponse.json({ success: true, message: "Transaction Successfull", account }, { status: 200 });
             }
         }
     } else {
@@ -145,7 +145,7 @@ function handleCredit(body: TransactionBody) {
     // Validate account and ifsc for crediting
     if (account_number === account.account_number && ifsc === account.ifsc) {
         account.balance += orderAmount; // Add to account
-        return NextResponse.json({ success: true, message: "Transaction Successful", account }, { status: 200 });
+        return NextResponse.json({ success: true, message: "Transaction Successfull", account }, { status: 200 });
     } else {
         return NextResponse.json({ message: "Transaction failed, wrong credentials provided" }, { status: 400 });
     }
