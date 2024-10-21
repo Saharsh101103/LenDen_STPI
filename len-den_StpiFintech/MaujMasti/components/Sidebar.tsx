@@ -18,11 +18,19 @@ interface GamingSidebarProps {
   defaultOpen?: boolean
   accentColor?: string
   userName?: string
-  isstepsLimit: boolean;
-  ismineCount: boolean;
+  isstepsLimit?: boolean;
+  ismineCount?: boolean;
   game: string;
   gameState: 'betting' | 'playing' | 'ended';
+  bettingAmount:number
+  stepsLimit?:number
+  mines?:number
+  message: string
   setGameState?: React.Dispatch<React.SetStateAction<'betting' | 'playing' | 'ended'>>
+  setBettingAmount?: React.Dispatch<React.SetStateAction<number>>
+  setStepsLimit?: React.Dispatch<React.SetStateAction<number>>
+  setMessage?: React.Dispatch<React.SetStateAction<string>>
+  initializeGame: () => void
 }
 
 const navItems = [
@@ -37,20 +45,21 @@ export default function GamingSidebar({
   ismineCount,
   game,
   gameState,
-  setGameState
+  setGameState,
+  bettingAmount,
+  setBettingAmount,
+  message,
+  setMessage,
+  stepsLimit,
+  setStepsLimit,
+  initializeGame
 }: GamingSidebarProps) {
   const { user } = useAuth()
   const userName = user?.username ?? "user"
   const [isOpen, setIsOpen] = useState(defaultOpen)
   const [isMobile, setIsMobile] = useState(false)
-  const [betAmount, setBetAmount] = useState<number>(0);
-  const [bettingAmount, setBettingAmount] = useState("0")
-  const [stepsLimit, setStepsLimit] = useState("16")
+  const [isGameOn, setIsGameOn] = useState(false)
   const [mineCount, setMineCount] = useState("1")
-
-  const handleBetAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setBetAmount(Number(e.target.value));
-  };
 
   
   const handleStartGame = async (
@@ -69,9 +78,12 @@ export default function GamingSidebar({
   
       if (start && setGameState) {
         setGameState('playing');
-        console.log("Setting state to 'playing'");
+        setIsGameOn(true)
+        console.log("Setting state to 'playing' ");
       }
-  
+      if(setMessage){
+        setMessage(response)
+      }
       console.log('Game started:', start, response); // Log this instead
     } catch (error) {
       console.error('Error starting the game:', error);
@@ -227,8 +239,8 @@ export default function GamingSidebar({
                           value={bettingAmount}
                           onChange={(e) => {
                             const value = parseInt(e.target.value, 10); // Get the value as an integer
-                            if (value >= 0) {
-                              setBettingAmount(value.toString()); // Only set the state if value is 16 or greater
+                            if (value >= 0 && setBettingAmount) {
+                              setBettingAmount(value); // Only set the state if value is 16 or greater
                             }
                           }}
                           className="pl-10 w-full px-4 py-2 bg-gray-700 bg-opacity-50 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -250,8 +262,8 @@ export default function GamingSidebar({
                             value={stepsLimit}
                             onChange={(e) =>  {
                               const value = parseInt(e.target.value, 10); // Get the value as an integer
-                              if (value >= 16) {
-                                setStepsLimit(value.toString()); // Only set the state if value is 16 or greater
+                              if (value >= 16 && setStepsLimit) {
+                                setStepsLimit(value); // Only set the state if value is 16 or greater
                               }
                             }}
                             className="pl-10 w-full px-4 py-2 bg-gray-700 bg-opacity-50 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -288,18 +300,19 @@ export default function GamingSidebar({
                     }
                   </motion.div>
 
-                  <motion.button
+                  {gameState == "ended" ? <motion.button
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
+                    disabled = {isGameOn}
                     transition={{ delay: 0.4 }}
-                    onClick={() => {handleStartGame(game!, betAmount, setGameState)}}
-                    className="w-full py-3 px-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-md shadow-lg hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 transform hover:scale-105 transition-all duration-300 relative z-10"
+                    onClick={() => {handleStartGame(game!, bettingAmount, setGameState)}}
+                    className="w-full py-3 px-4 disabled:hover:bg-current bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-md shadow-lg hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 transform hover:scale-105 transition-all duration-300 relative z-10"
                   >
                     <span className="flex items-center justify-center">
                       <Zap className="mr-2" size={20} />
-                      Start Game
+                      {isGameOn ? 'Running' : 'Start Game'}
                     </span>
-                  </motion.button>
+                  </motion.button> : <></>}
                 </motion.div>
               </div>
 

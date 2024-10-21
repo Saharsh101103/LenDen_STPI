@@ -13,7 +13,7 @@ export async function POST(req: NextRequest, res: NextResponse) {
         start = true
     }
     else{
-        response = "Not enough cash, please lower bet amount"
+        response = "Not enough cash, please lower bet amount!"
     }
 
     
