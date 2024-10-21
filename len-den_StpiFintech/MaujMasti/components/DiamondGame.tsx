@@ -1,254 +1,105 @@
-"use client";
-import React, { useState, useCallback } from "react";
-import GameBoard from "./GameBoard";
-import { motion } from 'framer-motion';
+'use client'
 
-const TOTAL_TILES = 24;
+import React, { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
+import { Button } from "@/components/ui/button"
+import { useAuth } from '@/hooks/useAuth'
+import axios from 'axios'
 
-const DiamondGame: React.FC = () => {
-  const [bombCount, setBombCount] = useState<string>("4");
-  const [betAmount, setBetAmount] = useState<string>("10");
-  const [currentWinnings, setCurrentWinnings] = useState(0);
-  const [gameOver, setGameOver] = useState(false);
-  const [isGameStarted, setIsGameStarted] = useState(false);
-  const [clickCount, setClickCount] = useState(0);
+interface DiamondGameProps {
+  gameState: 'betting' | 'playing' | 'ended';
+  setGameState: React.Dispatch<React.SetStateAction<'betting' | 'playing' | 'ended'>>;
+  bettingAmount: number;
+  setBettingAmount: React.Dispatch<React.SetStateAction<number>>;
+  newCash: number;
+}
 
-  const calculateProbability = useCallback(
-    (safeClicks: number) => {
-      const remainingSafeTiles =
-        TOTAL_TILES - parseInt(bombCount) - safeClicks;
-      const remainingTotalTiles = TOTAL_TILES - safeClicks;
+const DiamondGame: React.FC<DiamondGameProps> = ({
+  gameState,
+  setGameState,
+  bettingAmount,
+  setBettingAmount,
+  newCash,
+}) => {
+  const { user } = useAuth();
+  const [diamonds, setDiamonds] = useState<number[]>([]);
+  const [isGameActive, setIsGameActive] = useState(false);
+  const [message, setMessage] = useState('');
 
-      return remainingSafeTiles / remainingTotalTiles;
-    },
-    [bombCount]
-  );
+  // Function to start the diamond game
+  const startGame = async () => {
+    try {
+      const res = await axios.post('/api/start-diamond-game', {
+        userId: user?.id,
+        betAmount: bettingAmount,
+      });
 
-  const calculatePayout = useCallback(
-    (safeClicks: number) => {
-      let payout = parseFloat(betAmount);
-      for (let i = 0; i < safeClicks; i++) {
-        payout /= calculateProbability(i);
+      if (res.data.success) {
+        setIsGameActive(true);
+        setGameState('playing');
+        setDiamonds(res.data.diamonds);
+        setMessage('Game started! Click on diamonds to win!');
+      } else {
+        setMessage(res.data.message);
       }
-      return payout;
-    },
-    [betAmount, calculateProbability]
-  );
-
-  const handleSafeClick = useCallback(
-    (newClickCount: number) => {
-      setClickCount(newClickCount);
-      const newWinnings = calculatePayout(newClickCount);
-      setCurrentWinnings(newWinnings);
-    },
-    [calculatePayout]
-  );
-
-  const handleGameOver = useCallback((isHomeRun: boolean) => {
-    setGameOver(true);
-    if (!isHomeRun) {
-      setCurrentWinnings(0);
-    }
-    setIsGameStarted(false);
-  }, []);
-
-  const handleStartGame = () => {
-    const bombCountNum = parseInt(bombCount);
-    const betAmountNum = parseFloat(betAmount);
-
-    if (isNaN(bombCountNum) || bombCountNum < 1 || bombCountNum >= TOTAL_TILES) {
-      alert("Enter a valid number of bombs (1-24).");
-      return;
-    }
-
-    if (isNaN(betAmountNum) || betAmountNum <= 0) {
-      alert("Enter a valid amount (greater than 0).");
-      return;
-    }
-
-    setIsGameStarted(true);
-    setGameOver(false);
-    setCurrentWinnings(0);
-    setClickCount(0);
-  };
-
-  const handleCashout = () => {
-    if (currentWinnings > parseFloat(betAmount)) {
-      setGameOver(true);
-      setIsGameStarted(false);
-      alert(
-        `Congratulations !! You've cashed out $${currentWinnings.toFixed(2)}`
-      );
+    } catch (error) {
+      console.error('Error starting the diamond game:', error);
+      setMessage('Failed to start the game. Please try again.');
     }
   };
 
-  const handleBombCountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setBombCount(e.target.value);
-  };
-
-  const handleBetAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setBetAmount(e.target.value);
+  // Function to handle diamond click
+  const handleDiamondClick = (diamondIndex: number) => {
+    // Logic to handle diamond click (win/lose)
+    setIsGameActive(false);
+    setGameState('ended');
+    // Update user's cash, notify results, etc.
+    setMessage(`You clicked diamond ${diamondIndex + 1}!`);
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="flex flex-col md:flex-row justify-center items-start space-y-8 md:space-y-0 md:space-x-8"
-      >
-        {/* Game Settings Section */}
-        <div
-          className="w-full md:w-64 p-4 rounded-lg shadow-lg transform hover:scale-105 transition-transform"
-          style={{
-            backgroundColor: 'var(--container-bg-color)',
-            boxShadow: `0 4px 8px var(--shadow-color)`,
-          }}
+    <div className="flex flex-col items-center justify-center h-full">
+      {gameState === 'betting' && (
+        <motion.button
+          onClick={startGame}
+          className="py-2 px-4 bg-blue-500 text-white rounded-md"
+          whileHover={{ scale: 1.05 }}
         >
-          <h2
-            className="text-2xl font-bold mb-4"
-            style={{ color: 'var(--heading-color)' }}
-          >
-            Game Settings
-          </h2>
-          <div className="mb-4">
-            <label
-              htmlFor="BombCount"
-              className="block mb-2"
-              style={{ color: 'var(--label-color)' }}
-            >
-              Number of Bomb Tiles:
-            </label>
-            <input
-              type="number"
-              id="BombCount"
-              value={bombCount}
-              onChange={handleBombCountChange}
-              min="1"
-              max="24"
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 transition"
-              style={{
-                borderColor: 'var(--border-color)',
-                backgroundColor: 'transparent',
-                color: 'var(--text-color)',
-              }}
-              disabled={isGameStarted}
-            />
-          </div>
-          <div className="mb-4">
-            <label
-              htmlFor="betAmount"
-              className="block mb-2"
-              style={{ color: 'var(--label-color)' }}
-            >
-              Betting Amount:
-            </label>
-            <input
-              type="number"
-              id="betAmount"
-              value={betAmount}
-              onChange={handleBetAmountChange}
-              min="0.01"
-              step="0.01"
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 transition"
-              style={{
-                borderColor: 'var(--border-color)',
-                backgroundColor: 'transparent',
-                color: 'var(--text-color)',
-              }}
-              disabled={isGameStarted}
-            />
-          </div>
-          <button
-            onClick={handleStartGame}
-            className="w-full text-white px-4 py-2 rounded-lg shadow-lg hover:bg-blue-600 focus:outline-none focus:ring-2 transition"
-            style={{
-              background: `linear-gradient(to right, var(--button-bg-gradient-start), var(--button-bg-gradient-end))`,
-            }}
-            disabled={isGameStarted}
-          >
-            {isGameStarted ? "Game in Progress" : "Start Game"}
-          </button>
-          <button
-            onClick={handleCashout}
-            className={`w-full mt-4 px-4 py-2 rounded-lg shadow-lg focus:outline-none focus:ring-2 transition ${
-              currentWinnings > parseFloat(betAmount)
-                ? "text-white"
-                : "text-gray-600 cursor-not-allowed"
-            }`}
-            style={{
-              background: currentWinnings > parseFloat(betAmount)
-                ? `linear-gradient(to right, var(--cashout-bg-gradient-start), var(--cashout-bg-gradient-end))`
-                : 'var(--disabled-bg-color)',
-            }}
-            disabled={currentWinnings <= parseFloat(betAmount)}
-          >
-            Cashout
-          </button>
-        </div>
+          Start Diamond Game
+        </motion.button>
+      )}
 
-        {/* Game Board and Status Section */}
-        <motion.div
-          initial={{ x: 200 }}
-          animate={{ x: 0 }}
-          className="w-full w-fit p-4 rounded-lg shadow-lg transition-all"
-          style={{
-            backgroundColor: 'var(--container-bg-color)',
-            boxShadow: `0 4px 8px var(--shadow-color)`,
-          }}
-        >
-          <GameBoard
-            bombCount={parseInt(bombCount)}
-            onSafeClick={handleSafeClick}
-            onGameOver={handleGameOver}
-            isGameStarted={isGameStarted}
-          />
-          <h2
-            className="text-2xl font-bold mb-4"
-            style={{ color: 'var(--heading-color)' }}
+      {gameState === 'playing' && (
+        <div className="flex space-x-4">
+          {diamonds.map((diamond, index) => (
+            <motion.div
+              key={index}
+              className="w-16 h-16 bg-yellow-500 flex items-center justify-center rounded-md cursor-pointer"
+              onClick={() => handleDiamondClick(index)}
+              whileHover={{ scale: 1.1 }}
+            >
+              {diamond}
+            </motion.div>
+          ))}
+        </div>
+      )}
+
+      {gameState === 'ended' && (
+        <div className="text-center mt-4">
+          <p>{message}</p>
+          <Button
+            onClick={() => {
+              setGameState('betting');
+              setBettingAmount(0);
+              setDiamonds([]);
+              setMessage('');
+            }}
+            className="mt-4"
           >
-            Game Status
-          </h2>
-          <div className="mb-4">
-            <label
-              className="block mb-2"
-              style={{ color: 'var(--label-color)' }}
-            >
-              Current Winnings:
-            </label>
-            <p
-              className="text-2xl font-bold"
-              style={{ color: 'var(--text-color)' }}
-            >
-              ${currentWinnings.toFixed(2)}
-            </p>
-          </div>
-          <div className="mb-4">
-            <label
-              className="block mb-2"
-              style={{ color: 'var(--label-color)' }}
-            >
-              Clicks Made:
-            </label>
-            <p
-              className="text-2xl font-bold"
-              style={{ color: 'var(--text-color)' }}
-            >
-              {clickCount}
-            </p>
-          </div>
-          {gameOver && (
-            <div className="mb-4">
-              <p
-                className="text-xl"
-                style={{ color: 'var(--text-color)' }}
-              >
-                Game Over!
-              </p>
-            </div>
-          )}
-        </motion.div>
-      </motion.div>
+            New Game
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

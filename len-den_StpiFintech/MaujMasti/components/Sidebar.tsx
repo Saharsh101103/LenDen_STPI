@@ -8,11 +8,16 @@ import { useAuth } from '@/hooks/useAuth'
 import Link from 'next/link'
 import axios from 'axios'
 import { Sparkles, Zap, Footprints, Bomb } from "lucide-react"
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 
 interface StartGameResponse {
   start: boolean;
   response: string;
 }
+const navItems = [
+  { icon: Home, label: 'Home', link: '/' },
+  { icon: Gamepad2, label: 'Dashboard', link: '/dashboard' },
+]
 
 interface GamingSidebarProps {
   defaultOpen?: boolean
@@ -29,14 +34,12 @@ interface GamingSidebarProps {
   setGameState?: React.Dispatch<React.SetStateAction<'betting' | 'playing' | 'ended'>>
   setBettingAmount?: React.Dispatch<React.SetStateAction<number>>
   setStepsLimit?: React.Dispatch<React.SetStateAction<number>>
+  setMineCount?: React.Dispatch<React.SetStateAction<number>>
   setMessage?: React.Dispatch<React.SetStateAction<string>>
-  initializeGame: () => void
+  initializeGame: (() => void),
+  newCash: number,
 }
 
-const navItems = [
-  { icon: Home, label: 'Home', link: '/' },
-  { icon: Gamepad2, label: 'Dashboard', link: '/dashboard' },
-]
 
 export default function GamingSidebar({
   accentColor = '#123k1j',
@@ -52,14 +55,18 @@ export default function GamingSidebar({
   setMessage,
   stepsLimit,
   setStepsLimit,
-  initializeGame
+  initializeGame,
+  setMineCount,
+  mines,
+  newCash
 }: GamingSidebarProps) {
-  const { user } = useAuth()
+  const { user, session } = useAuth()
   const userName = user?.username ?? "user"
   const [isOpen, setIsOpen] = useState(defaultOpen)
   const [isMobile, setIsMobile] = useState(false)
   const [isGameOn, setIsGameOn] = useState(false)
-  const [mineCount, setMineCount] = useState("1")
+  const [userMoney, setUserMoney] = useState(0)
+  
 
   
   const handleStartGame = async (
@@ -89,6 +96,7 @@ export default function GamingSidebar({
       console.error('Error starting the game:', error);
     }
   };
+
   
   // Using useEffect to log the updated state
   useEffect(() => {
@@ -102,13 +110,28 @@ export default function GamingSidebar({
   }, [gameState]);
   
 
-  const handleEndGame = async (results: any) => {
+  useEffect(() => {
+    if(gameState === "ended"){
+      handleEndGame(newCash)
+    }
+}, [gameState]);
+
+useEffect(() => {
+  const handleResize = () => setIsMobile(window.innerWidth < 768);
+  window.addEventListener('resize', handleResize);
+  return () => window.removeEventListener('resize', handleResize);
+}, []);
+
+
+  const handleEndGame = async (results: number) => {
     try {
       const response = await axios.post('/api/end-game', {
-        gameType: 'DiamondMiner',
-        results,
+        gameType: game,
+        results: newCash,
+        user
       });
-      // Update user's cash based on response
+      setIsGameOn(false)
+      setUserMoney(parseInt(response.data.returnResult))
       console.log('Cash updated:', response.data);
     } catch (error) {
       console.error('Error ending the game:', error);
@@ -131,6 +154,11 @@ export default function GamingSidebar({
 
   const toggleSidebar = () => setIsOpen(!isOpen)
 
+
+  useEffect(() => {
+    setUserMoney(user?.cash!)
+    }, [user?.cash])
+  
   return (
     <>
       <Button
@@ -262,7 +290,7 @@ export default function GamingSidebar({
                             value={stepsLimit}
                             onChange={(e) =>  {
                               const value = parseInt(e.target.value, 10); // Get the value as an integer
-                              if (value >= 16 && setStepsLimit) {
+                              if (value >= 0 && setStepsLimit) {
                                 setStepsLimit(value); // Only set the state if value is 16 or greater
                               }
                             }}
@@ -282,14 +310,15 @@ export default function GamingSidebar({
                           <input
                             type="number"
                             id="mineCount"
-                            value={mineCount}
+                            value={mines}
                             onChange={(e) => {
                               const value = parseInt(e.target.value, 10); // Get the value as an integer
-                              if (value >= 1) {
-                                setMineCount(value.toString()); // Only set the state if value is 16 or greater
+                              if (value >= 1 && value < 25 && setMineCount) {
+                                setMineCount(value); 
+                                console.log("MINES =", mines)
                               }
                             }}
-                            min={16} // Restrict the minimum value to 16
+                            min={1} // Restrict the minimum value to 16
                             className="pl-10 w-full px-4 py-2 bg-gray-700 bg-opacity-50 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             placeholder="Enter mine count"
                           />
@@ -303,6 +332,23 @@ export default function GamingSidebar({
                   {gameState == "ended" ? <motion.button
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.4 }}
+                    onClick={() => {
+                      initializeGame();
+                      if(setGameState)
+                      {
+                        setGameState('betting');
+                      }
+                    }}
+                    className="w-full py-3 px-4 disabled:hover:bg-current bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-md shadow-lg hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 transform hover:scale-105 transition-all duration-300 relative z-10"
+                  >
+                    <span className="flex items-center justify-center">
+                      <Gamepad2 className="mr-2" size={20} />
+                      {'New Game'}
+                    </span>
+                  </motion.button> : <motion.button
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
                     disabled = {isGameOn}
                     transition={{ delay: 0.4 }}
                     onClick={() => {handleStartGame(game!, bettingAmount, setGameState)}}
@@ -312,7 +358,7 @@ export default function GamingSidebar({
                       <Zap className="mr-2" size={20} />
                       {isGameOn ? 'Running' : 'Start Game'}
                     </span>
-                  </motion.button> : <></>}
+                  </motion.button>}
                 </motion.div>
               </div>
 
@@ -325,12 +371,12 @@ export default function GamingSidebar({
               className="mt-auto"
             >
               <div className="flex items-center space-x-4 p-4 bg-gray-800 rounded-lg">
-                <div
-                  className="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center"
-                  style={{ backgroundColor: accentColor }}
-                >
-                  {userName?.charAt(0)}
-                </div>
+              <Avatar className="h-8 w-8">
+                    <AvatarImage src={session?.user_metadata.avatar_url} alt={user?.username} />
+                    <AvatarFallback className="text-black">
+                      {user?.username?.slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
                 <div>
                   <div className="font-medium">{userName}</div>
                   <div className="text-sm text-gray-400">Online</div>
@@ -340,11 +386,11 @@ export default function GamingSidebar({
             <motion.div className='flex justify-between items-center p-4'>
               <div className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-800 transition-colors duration-200"
               >
-                <BadgeDollarSign className="h-6 w-6" style={{ color: accentColor }} />
+                <BadgeDollarSign className="h-6" style={{ color: accentColor }} />
                 <span>Credits</span>
               </div>
               <div className='p-2 border rounded-full'>
-                $ {`${user?.cash ?? 0}.00`}
+                 {`$ ${user ? userMoney : 0}`}
               </div>
             </motion.div>
           </motion.aside>

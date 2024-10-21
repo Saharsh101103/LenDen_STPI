@@ -1,37 +1,26 @@
 // pages/api/end-game.ts
-import { useAuth } from '@/hooks/useAuth';
-import type { NextApiRequest, NextApiResponse } from 'next';
+import { NextRequest, NextResponse } from 'next/server';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export async function POST(req: NextRequest, res: NextResponse) {
   if (req.method === 'POST') {
-    const { gameType, results, cash, bettingAmount } = req.body;
-    const {user} = useAuth()
+    const body = await req.json();
+    const { results, user } = body;
     let returnResult = ""
-    if(results){
-        const newCash = user?.cash + cash
+
+        const newCash = user?.cash + results
         try {
             const response = await prisma?.user.update({data: {cash: newCash}, where: {email: user?.email}})
-            returnResult = response!.toString()
+            returnResult = response!.cash.toString()
         } catch (error) {
             const response = error
             returnResult = response!.toString()
         }
-    }
-    else{
-        const newCash = user?.cash! - bettingAmount
-        try {
-            const response = await prisma?.user.update({data: {cash: newCash}, where: {email: user?.email}})
-            returnResult = response!.toString()
-        } catch (error) {
-            const response = error
-            returnResult = response!.toString()
-        }
-    }
+
     
     const updatedCash = { returnResult };
 
-    return res.status(200).json(updatedCash);
+    return NextResponse.json(updatedCash, {status: 200})
   }
 
-  return res.status(405).json({ message: 'Method not allowed' });
+  return  NextResponse.json({message: 'Method not allowed'}, {status: 405})
 }
