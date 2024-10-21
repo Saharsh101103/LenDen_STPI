@@ -1,7 +1,7 @@
 "use client";
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useCallback } from "react";
 import GameBoard from "./GameBoard";
+import { motion } from 'framer-motion';
 
 const TOTAL_TILES = 24;
 
@@ -92,12 +92,31 @@ const DiamondGame: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex flex-col md:flex-row justify-center items-start space-y-8 md:space-y-0 md:space-x-8">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="flex flex-col md:flex-row justify-center items-start space-y-8 md:space-y-0 md:space-x-8"
+      >
         {/* Game Settings Section */}
-        <div className="w-full md:w-64 p-4 bg-gray-100 rounded-lg">
-          <h2 className="text-xl font-bold mb-4 text-black">Game Settings</h2>
+        <div
+          className="w-full md:w-64 p-4 rounded-lg shadow-lg transform hover:scale-105 transition-transform"
+          style={{
+            backgroundColor: 'var(--container-bg-color)',
+            boxShadow: `0 4px 8px var(--shadow-color)`,
+          }}
+        >
+          <h2
+            className="text-2xl font-bold mb-4"
+            style={{ color: 'var(--heading-color)' }}
+          >
+            Game Settings
+          </h2>
           <div className="mb-4">
-            <label htmlFor="BombCount" className="block mb-2 text-black">
+            <label
+              htmlFor="BombCount"
+              className="block mb-2"
+              style={{ color: 'var(--label-color)' }}
+            >
               Number of Bomb Tiles:
             </label>
             <input
@@ -107,13 +126,21 @@ const DiamondGame: React.FC = () => {
               onChange={handleBombCountChange}
               min="1"
               max="24"
-              style= {{color : 'black'}}
-              className="w-full px-2 py-1 border rounded"
+              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 transition"
+              style={{
+                borderColor: 'var(--border-color)',
+                backgroundColor: 'transparent',
+                color: 'var(--text-color)',
+              }}
               disabled={isGameStarted}
             />
           </div>
           <div className="mb-4">
-            <label htmlFor="betAmount" className="block mb-2 text-black">
+            <label
+              htmlFor="betAmount"
+              className="block mb-2"
+              style={{ color: 'var(--label-color)' }}
+            >
               Betting Amount:
             </label>
             <input
@@ -123,25 +150,37 @@ const DiamondGame: React.FC = () => {
               onChange={handleBetAmountChange}
               min="0.01"
               step="0.01"
-              style= {{color : 'black'}}
-              className="w-full px-2 py-1 border rounded"
+              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 transition"
+              style={{
+                borderColor: 'var(--border-color)',
+                backgroundColor: 'transparent',
+                color: 'var(--text-color)',
+              }}
               disabled={isGameStarted}
             />
           </div>
           <button
             onClick={handleStartGame}
-            className="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 mb-2"
+            className="w-full text-white px-4 py-2 rounded-lg shadow-lg hover:bg-blue-600 focus:outline-none focus:ring-2 transition"
+            style={{
+              background: `linear-gradient(to right, var(--button-bg-gradient-start), var(--button-bg-gradient-end))`,
+            }}
             disabled={isGameStarted}
           >
             {isGameStarted ? "Game in Progress" : "Start Game"}
           </button>
           <button
             onClick={handleCashout}
-            className={`w-full px-4 py-2 rounded ${
+            className={`w-full mt-4 px-4 py-2 rounded-lg shadow-lg focus:outline-none focus:ring-2 transition ${
               currentWinnings > parseFloat(betAmount)
-                ? "bg-green-500 text-white hover:bg-green-600"
-                : "bg-gray-300 text-gray-600 cursor-not-allowed"
+                ? "text-white"
+                : "text-gray-600 cursor-not-allowed"
             }`}
+            style={{
+              background: currentWinnings > parseFloat(betAmount)
+                ? `linear-gradient(to right, var(--cashout-bg-gradient-start), var(--cashout-bg-gradient-end))`
+                : 'var(--disabled-bg-color)',
+            }}
             disabled={currentWinnings <= parseFloat(betAmount)}
           >
             Cashout
@@ -149,32 +188,67 @@ const DiamondGame: React.FC = () => {
         </div>
 
         {/* Game Board and Status Section */}
-        <div className="w-full w-fit p-4 bg-gray-100 rounded-lg">
+        <motion.div
+          initial={{ x: 200 }}
+          animate={{ x: 0 }}
+          className="w-full w-fit p-4 rounded-lg shadow-lg transition-all"
+          style={{
+            backgroundColor: 'var(--container-bg-color)',
+            boxShadow: `0 4px 8px var(--shadow-color)`,
+          }}
+        >
           <GameBoard
             bombCount={parseInt(bombCount)}
             onSafeClick={handleSafeClick}
             onGameOver={handleGameOver}
             isGameStarted={isGameStarted}
-          ></GameBoard>
-          <h2 className="text-xl font-bold mb-4 text-black">Game Status</h2>
+          />
+          <h2
+            className="text-2xl font-bold mb-4"
+            style={{ color: 'var(--heading-color)' }}
+          >
+            Game Status
+          </h2>
           <div className="mb-4">
-            <label className="block mb-2 text-black">Current Winnings:</label>
-            <p className="text-2xl font-bold text-black">
+            <label
+              className="block mb-2"
+              style={{ color: 'var(--label-color)' }}
+            >
+              Current Winnings:
+            </label>
+            <p
+              className="text-2xl font-bold"
+              style={{ color: 'var(--text-color)' }}
+            >
               ${currentWinnings.toFixed(2)}
             </p>
           </div>
           <div className="mb-4">
-            <label className="block mb-2 text-black">Click Count:</label>
-            <p className="text-2xl font-bold text-black">{clickCount}</p>
-          </div>
-          <div className="mb-4">
-            <label className="block mb-2 text-black">Game Over:</label>
-            <p className="text-2xl font-bold text-black">
-              {gameOver ? "Yes" : "No"}
+            <label
+              className="block mb-2"
+              style={{ color: 'var(--label-color)' }}
+            >
+              Clicks Made:
+            </label>
+            <p
+              className="text-2xl font-bold"
+              style={{ color: 'var(--text-color)' }}
+            >
+              {clickCount}
             </p>
           </div>
-        </div>
-      </div>
+          {gameOver && (
+            <div className="mb-4">
+              <p
+                className="text-xl"
+                style={{ color: 'var(--text-color)' }}
+              >
+                Game Over!
+              </p>
+            </div>
+          )}
+        </motion.div>
+      </motion.div>
     </div>
   );
 };

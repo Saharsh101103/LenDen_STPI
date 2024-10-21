@@ -33,16 +33,17 @@ const FloatingBubble = ({ delay = 0 }) => (
     }}
   />
 );
+
 const buttonVariants = {
   rest: { scale: 1 },
   hover: { scale: 1.05 },
   tap: { scale: 0.95 },
-}
+};
 
 const iconVariants = {
   rest: { scale: 1 },
   hover: { scale: 1.2, rotate: 5 },
-}
+};
 
 export default function Component() {
   const [activeTab, setActiveTab] = useState('signin');
@@ -74,10 +75,10 @@ export default function Component() {
     );
   
     return () => {
+
     };
   }, [router]);
   
-
   const handleUserRow = async (user: User) => {
     const { data, error } = await supabase
       .from('users') // Your users table name
@@ -89,11 +90,11 @@ export default function Component() {
         .from('users')
         .insert({
           email: user.email,
-          name: user.user_metadata.full_name || name, // Assuming name is returned or input during signup
-          username: user.user_metadata.username || username, // Assuming username is returned or set
+          name: user.user_metadata.full_name || name,
+          username: user.user_metadata.username || username,
           cash: 0,
           account_num: null,
-          ifsc: null
+          ifsc: null,
         });
     }
   };
@@ -102,7 +103,6 @@ export default function Component() {
     setLoading(true);
     setError(null);
   
-    // Correctly access user from the response
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -114,10 +114,9 @@ export default function Component() {
       },
     });
   
-    // If sign-up is successful, user will be inside data.session
     if (data.session) {
-      const user = data.session.user; // Access user from session
-      await handleUserRow(user); // Insert new user into the database after signup
+      const user = data.session.user;
+      await handleUserRow(user); 
       router.push('/dashboard');
     }
   
@@ -137,7 +136,6 @@ export default function Component() {
       },
     });
   
-    // No session is immediately available; handle errors, if any
     if (error) {
       setError(error.message);
     }
@@ -154,14 +152,12 @@ export default function Component() {
       },
     });
   
-    // No session is immediately available; handle errors, if any
     if (error) {
       setError(error.message);
     }
   
     setLoading(false);
   };
-  
   
   const handleSignIn = async () => {
     setLoading(true);
@@ -175,6 +171,7 @@ export default function Component() {
       setError(error.message);
     }
   };
+  
   const isButtonDisabled = loading || !email || !password;
 
   return (
@@ -227,42 +224,42 @@ export default function Component() {
                     {loading ? 'Signing in...' : 'Sign In'}
                   </Button>
                   <div className='flex flex-col gap-2'>
-                  <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap">
-                <Button
-                  className="w-full h-12 bg-white text-black hover:bg-gray-100 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600 transition-all duration-300 ease-in-out overflow-hidden relative"
-                  onClick={handleGoogleSignIn}
-                  disabled={loading}
-                >
-                  <motion.span className="absolute inset-0 bg-black/5 dark:bg-white/5" initial={{ scale: 0, opacity: 0 }} whileHover={{ scale: 2, opacity: 1 }} transition={{ duration: 0.5 }} />
-                  <motion.span className="relative z-10 flex items-center justify-center" variants={iconVariants}>
-                    <FaGoogle className="mr-2" />
-                    {loading ? 'Logging in...' : 'Login with Google'}
-                  </motion.span>
-                </Button>
-              </motion.div>
-              <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap">
-                <Button
-                  className="w-full h-12 bg-[#7289da] hover:bg-[#5e73bc] text-white transition-all duration-300 ease-in-out overflow-hidden relative"
-                  onClick={handleDiscordSignIn}
-                  disabled={loading}
-                >
-                  <motion.span className="absolute inset-0 bg-white/10" initial={{ scale: 0, opacity: 0 }} whileHover={{ scale: 2, opacity: 1 }} transition={{ duration: 0.5 }} />
-                  <motion.span className="relative z-10 flex items-center justify-center" variants={iconVariants}>
-                    <FaDiscord className="mr-2" />
-                    {loading ? 'Logging in...' : 'Login with Discord'}
-                  </motion.span>
-                </Button>
-              </motion.div>
+                    <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap">
+                      <Button
+                        className="w-full h-12 bg-white text-black hover:bg-gray-100 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600 transition-all duration-300 ease-in-out overflow-hidden relative"
+                        onClick={handleGoogleSignIn}
+                        disabled={loading}
+                      >
+                        <motion.span className="absolute inset-0 bg-black/5 dark:bg-white/5" initial={{ scale: 0, opacity: 0 }} whileHover={{ scale: 2, opacity: 1 }} transition={{ duration: 0.5 }} />
+                        <motion.span className="relative z-10 flex items-center justify-center" variants={iconVariants}>
+                          <FaGoogle className="mr-2" />
+                          {loading ? 'Logging in...' : 'Login with Google'}
+                        </motion.span>
+                      </Button>
+                    </motion.div>
+                    <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap">
+                      <Button
+                        className="w-full h-12 bg-[#7289da] hover:bg-[#5e73bc] text-white transition-all duration-300 ease-in-out overflow-hidden relative"
+                        onClick={handleDiscordSignIn}
+                        disabled={loading}
+                      >
+                        <motion.span className="absolute inset-0 bg-white/10" initial={{ scale: 0, opacity: 0 }} whileHover={{ scale: 2, opacity: 1 }} transition={{ duration: 0.5 }} />
+                        <motion.span className="relative z-10 flex items-center justify-center" variants={iconVariants}>
+                          <FaDiscord className="mr-2" />
+                          {loading ? 'Logging in...' : 'Login with Discord'}
+                        </motion.span>
+                      </Button>
+                    </motion.div>
                   </div>
                 </TabsContent>
-
                 <TabsContent value="signup" className="space-y-4">
-                  <h2 className="text-2xl font-bold text-white mb-4">Create an Account</h2>
+                  <h2 className="text-2xl font-bold text-white mb-4">Create Account</h2>
                   {error && <p className="text-red-500">{error}</p>}
                   <div className="space-y-2">
                     <Label htmlFor="signup-name" className="text-white">Name</Label>
                     <Input
                       id="signup-name"
+                      type="text"
                       placeholder="Enter your name"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
@@ -272,7 +269,8 @@ export default function Component() {
                     <Label htmlFor="signup-username" className="text-white">Username</Label>
                     <Input
                       id="signup-username"
-                      placeholder="Choose a username"
+                      type="text"
+                      placeholder="Enter your username"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
                     />
@@ -297,35 +295,9 @@ export default function Component() {
                       onChange={(e) => setPassword(e.target.value)}
                     />
                   </div>
-                  <Button className="w-full" onClick={handleUserSignUp} disabled={isButtonDisabled}>
-                    {loading ? 'Creating account...' : 'Sign Up'}
+                  <Button className="w-full" onClick={handleUserSignUp} disabled={loading}>
+                    {loading ? 'Creating account...' : 'Create Account'}
                   </Button>
-                  <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap">
-                <Button
-                  className="w-full h-12 bg-white text-black hover:bg-gray-100 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600 transition-all duration-300 ease-in-out overflow-hidden relative"
-                  onClick={handleGoogleSignIn}
-                  disabled={loading}
-                >
-                  <motion.span className="absolute inset-0 bg-black/5 dark:bg-white/5" initial={{ scale: 0, opacity: 0 }} whileHover={{ scale: 2, opacity: 1 }} transition={{ duration: 0.5 }} />
-                  <motion.span className="relative z-10 flex items-center justify-center" variants={iconVariants}>
-                    <FaGoogle className="mr-2" />
-                    {loading ? 'Logging in...' : 'Login with Google'}
-                  </motion.span>
-                </Button>
-              </motion.div>
-              <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap">
-                <Button
-                  className="w-full h-12 bg-[#7289da] hover:bg-[#5e73bc] text-white transition-all duration-300 ease-in-out overflow-hidden relative"
-                  onClick={handleDiscordSignIn}
-                  disabled={loading}
-                >
-                  <motion.span className="absolute inset-0 bg-white/10" initial={{ scale: 0, opacity: 0 }} whileHover={{ scale: 2, opacity: 1 }} transition={{ duration: 0.5 }} />
-                  <motion.span className="relative z-10 flex items-center justify-center" variants={iconVariants}>
-                    <FaDiscord className="mr-2" />
-                    {loading ? 'Logging in...' : 'Login with Discord'}
-                  </motion.span>
-                </Button>
-              </motion.div>
                 </TabsContent>
               </motion.div>
             </AnimatePresence>
