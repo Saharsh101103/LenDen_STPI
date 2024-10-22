@@ -40,7 +40,7 @@ export default function SignUp()  {
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `/dashboard`,
+        redirectTo: `${process.env.WEBSITE_URL}/dashboard`,
       },
     })
   }
@@ -49,7 +49,8 @@ export default function SignUp()  {
     await supabase.auth.signInWithOAuth({
       provider: 'github',
       options: {
-        redirectTo: `/dashboard`,
+        
+        redirectTo: `${process.env.WEBSITE_URL}/dashboard`,
       },
     })  
   }

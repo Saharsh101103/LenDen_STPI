@@ -59,7 +59,13 @@ router.post("/create_order", async (req, res) => {
         },
       });
 
-      res.status(200).json(order);
+      const formUrl = `${process.env.PAYMENT_GATEWAY_URL}/paymentForm?orderId=${orderId}`;
+    
+
+      res.status(200).json({
+        message: "Order created successfully",
+        formUrl, // Return the URL for the iframe
+      })
     } catch (error) {
       res.status(400).json({ error: error.message });
     }

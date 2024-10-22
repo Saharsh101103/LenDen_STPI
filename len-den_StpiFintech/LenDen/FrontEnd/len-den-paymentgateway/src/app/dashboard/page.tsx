@@ -64,7 +64,10 @@ const Dashboard: React.FC = () => {
     };
 
     getSession();
-  }, [router]);
+  }, [router, user]);
+
+
+
 
   if (!user) return null;
 

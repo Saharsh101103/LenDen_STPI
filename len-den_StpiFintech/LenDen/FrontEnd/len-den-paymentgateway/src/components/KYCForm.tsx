@@ -99,6 +99,8 @@ export function KYCForm() {
               description: "You can continue to integration.",
               variant: "default",
             });
+
+            router.push('/dashboard')
           } else {
             toast({
               title: "Verification Unsuccessful",

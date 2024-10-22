@@ -40,6 +40,7 @@
     "react-dom": "^18",
     "react-hook-form": "^7.51.5",
     "react-simple-star-rating": "^5.1.7",
+    "react-toastify": "^10.0.6",
     "recharts": "^2.12.7",
     "supabase": "^1.172.2",
     "tailwind-merge": "^2.4.0",

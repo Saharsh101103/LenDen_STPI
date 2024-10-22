@@ -1,22 +1,34 @@
 import { NextApiRequest, NextApiResponse } from 'next';
+import { NextResponse } from 'next/server';
 
 // Mock function to interact with your payment gateway (replace with actual implementation)
-async function initiateTransaction(type: 'purchase' | 'withdraw', amount: number, userId: string) {
+async function initiateTransaction(type: 'purchase' | 'withdraw', price: number, orderId: string,
+  email: string,
+  businessName: string,
+  customerId: string,
+  customerName: string,
+  customerPhone: string,
+  customerEmail: string,) {
   // Call your payment gateway API with the transaction details
-  const gatewayResponse = await fetch('https://your-payment-gateway.com/api/pay', {
+
+if(type == "purchase"){
+  const gatewayResponse = await fetch(`${process.env.PAYMENT_GATEWAY_URL}/payment/create_order`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      type,
-      amount,
-      userId,
+      orderId,
+      email,
+      businessName,
+      customerId,
+      customerName,
+      customerPhone,
+      customerEmail,
+      price,
     }),
   });
-
   const data = await gatewayResponse.json();
-
   // The gateway should return a payment_url or success/failure status
   if (data.success) {
     return {
@@ -27,22 +39,40 @@ async function initiateTransaction(type: 'purchase' | 'withdraw', amount: number
   }
 }
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+
+
+}
+
+export async function POST(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const { type, amount, userId } = req.body;
+    const { orderId,
+      email,
+      businessName,
+      customerId,
+      customerName,
+      customerPhone,
+      customerEmail,
+      price, type } = req.body;
 
     // Call the payment gateway to initiate the transaction
-    const result = await initiateTransaction(type, amount, userId);
+    const result = await initiateTransaction(orderId,
+      email,
+      businessName,
+      customerId,
+      customerName,
+      customerPhone,
+      customerEmail,
+      price,
+       type);
 
-    if (result.payment_url) {
+    if (result!.payment_url) {
       // Return the URL for the frontend to open a modal or new tab
-      res.status(200).json({
-        payment_url: result.payment_url,
-      });
-    } else {
-      res.status(400).json({ error: 'Transaction initiation failed' });
+      return NextResponse.json({ payment_url: result!.payment_url }, { status: 200 })
+    }
+    else {
+      return NextResponse.json({ error: "Transaction initiation failed" }, { status: 400 })
     }
   } catch (error) {
-    res.status(500).json({ error: error});
+    return NextResponse.json({ message: error }, { status: 500 })
   }
 }

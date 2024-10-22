@@ -66,8 +66,8 @@ export default function ShopPage() {
 
   // Update balance when the user's cash changes (from user context)
   useEffect(() => {
-setBalance(user?.cash!)
-  }, [user?.cash])
+  setBalance(user?.cash || 0)
+  }, [useAuth, user?.cash])
 
 
   // Function to handle purchasing credits
@@ -80,10 +80,14 @@ const handlePurchase = async (amount: number, price: number) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          type: 'purchase',
-          amount,
+          orderId: `1101${Math.random()}`,
+          email: "saharshraj10@gmail.com",
+          businessName :"FlappyBizzz", 
+          customerId : `${user?.username}${user?.id}`, 
+          customerName : user?.name, 
+          customerPhone : "9022442200", 
+          customerEmail : user?.email,
           price,
-          userId: user?.id,
         }),
       });
   
@@ -324,9 +328,16 @@ const handlePurchase = async (amount: number, price: number) => {
           Please complete your purchase using the form below:
         </DialogDescription>
       </DialogHeader>
-      {/* Embed the payment gateway's payment form via iframe */}
-      <iframe src={paymentResult.payment_url} className="w-full h-96"></iframe>
+     
       <DialogFooter>
+      {paymentResult && (
+            <div className="payment-iframe-container">
+              <iframe
+                src={paymentResult}
+                title="Payment Form"
+              ></iframe>
+            </div>
+          )}
         <Button onClick={() => setConfirmPayment(false)} variant="outline">Cancel</Button>
       </DialogFooter>
     </DialogContent>
