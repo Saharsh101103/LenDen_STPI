@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Menu, X, DollarSign, Trash } from 'lucide-react'
+import { Menu, X, DollarSign, Trash, ShoppingCartIcon } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
 import Skeleton from './Skeleton'
@@ -63,10 +63,17 @@ export default function Navbar() {
               </Link>
             </div>
           </div>
-          <div className="hidden sm:flex sm:items-center">
+          <div className="hidden sm:flex sm:items-center space-x-2">
+            <div className='flex space-x-2'>
+
+          <Link className="flex items-center bg-purple-800 px-3 py-1 rounded-full hover:bg-opacity-80" href={'/shop'}>
+                <ShoppingCartIcon className="h-4 w-4 text-yellow-400 mr-1" />
+                <span className="text-sm font-medium">Shop</span>
+              </Link>
             <div className="flex items-center bg-purple-800 px-3 py-1 rounded-full mr-4">
               <DollarSign className="h-4 w-4 text-yellow-400 mr-1" />
               <span className="text-sm font-medium">{balance.toFixed(2)}</span>
+            </div>
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -103,30 +110,7 @@ export default function Navbar() {
         </div>
       </div>
 
-      {isMenuOpen && (
-        <div className="sm:hidden">
-          <div className="px-2 pt-2 pb-3 space-y-1">
-            <Link href="/games" className="block px-3 py-2 rounded-md text-base font-medium hover:bg-purple-800 transition-colors">
-              Games
-            </Link>
-            <Link href="/leaderboard" className="block px-3 py-2 rounded-md text-base font-medium hover:bg-purple-800 transition-colors">
-              Leaderboard
-            </Link>
-            <Link href="/shop" className="block px-3 py-2 rounded-md text-base font-medium hover:bg-purple-800 transition-colors">
-              Shop
-            </Link>
-            <div className="flex items-center justify-between px-3 py-2">
-              <div className="flex items-center bg-purple-800 px-3 py-1 rounded-full">
-                <DollarSign className="h-4 w-4 text-yellow-400 mr-1" />
-                <span className="text-sm font-medium">{balance.toFixed(2)}</span>
-              </div>
-              <Button onClick={handleLogout} variant="destructive" size="sm">
-                Log out
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      
     </nav>
   )
 }
