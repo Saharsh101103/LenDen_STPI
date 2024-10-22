@@ -138,7 +138,7 @@ router.post("/process_order", async (req, res) => {
           })
           console.log(customeracc.data, "module 2 success")
     
-          if(customeracc.data.message == 'Transaction Successfull'){
+          if(customeracc.data.success == true){
             console.log("prep mod 3")
             let useracc = await axios.post(process.env.BANK_URL,{
               "account_number" : decrypt(user.accountNumber),
@@ -172,6 +172,7 @@ router.post("/process_order", async (req, res) => {
     
           }
         } catch (error) {
+          console.log(process.env.BANK_URL)
           res.status(400).json({ error: error.message });
         }
        

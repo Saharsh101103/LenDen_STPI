@@ -3,13 +3,14 @@ const router = express.Router();
 const cors = require("cors");
 const crypto = require("crypto");
 const { PrismaClient } = require("@prisma/client");
-const { error } = require("console");
-const prisma = new PrismaClient();
 const bcrypt = require("bcrypt");
 const {encrypt, decrypt} = require("../utils/encyptions")
 
 require("dotenv").config();
 
+const prisma = new PrismaClient();
+
+// Middleware
 router.use(cors());
 router.use(express.json());
 router.use(
@@ -18,188 +19,173 @@ router.use(
   })
 );
 
+// Default route
 router.get("/", (req, res) => {
   res.send("Operations on user");
 });
 
+// Error handler
+const errorHandler = (res, error, statusCode = 400) => {
+  console.error(error);
+  res.status(statusCode).json({ error: error.message });
+};
 
-// Request to create User
-
-router.post('/create_user', async (req, res) => {
-  const exist = await prisma.user.findFirst({
-    where: { email: req.body.email }
-  });
-
-  if (exist) {
-    return res.status(400).json({ message: "User already exists", user: exist });
-  }
-
+// Request to create a user
+router.post("/create_user", async (req, res) => {
   try {
+    const { email, password, name, contact, panNumber, aadharNumber, accountNumber, ifsc, upi, isAdmin } = req.body;
+
+    // Check if user already exists
+    const exist = await prisma.user.findFirst({ where: { email } });
+
+    if (exist) {
+      return res.status(400).json({ message: "User already exists", user: exist });
+    }
+
     // Hash the password
-    const hashedPassword = await bcrypt.hash(req.body.password || "", 10);
-          // Encrypt other sensitive fields
-    const encryptedPanNumber = encrypt(req.body.panNumber);
-    const encryptedAadharNumber = encrypt(req.body.aadharNumber);
-    const encryptedAccountNumber = encrypt(req.body.accountNumber);
-    const encryptedIfsc = encrypt(req.body.ifsc);
-    const encryptedUpi = encrypt(req.body.upi);
-    
+    const hashedPassword = await bcrypt.hash(password || "", 10);
 
+    // Encrypt sensitive fields
+    const encryptedData = {
+      panNumber: encrypt(panNumber),
+      aadharNumber: encrypt(aadharNumber),
+      accountNumber: encrypt(accountNumber),
+      ifsc: encrypt(ifsc),
+      upi: encrypt(upi),
+    };
 
-    const user = await prisma.user.create({
+    // Create new user
+    const newUser = await prisma.user.create({
       data: {
-        email: req.body.email,
+        email,
         password: hashedPassword,
-        name: req.body.name,
-          contact: req.body.contact,
-          panNumber: encryptedPanNumber,
-          aadharNumber: encryptedAadharNumber,
-          accountNumber: encryptedAccountNumber,
-          ifsc: encryptedIfsc,
-          upi: encryptedUpi,
-          isAdmin: req.body.isAdmin
-      }
+        name,
+        contact,
+        ...encryptedData,
+        isAdmin,
+      },
     });
-    console.log(user)
 
-    res.status(200).json(user);
+    console.log(newUser);
+    res.status(200).json(newUser);
   } catch (error) {
-    res.status(400).json({ error: error.message});
+    errorHandler(res, error);
   }
 });
 
-//Request to retrieve user info
+// Request to retrieve user info
+router.get("/get_user", async (req, res) => {
+  try {
+    const { email } = req.query;
 
+    const user = await prisma.user.findUnique({ where: { email } });
 
-
-router.get('/get_user', async (req, res) => {
-    try {
-      const user = await prisma.user.findUnique({
-        where: { email: req.query.email }
-      });
-  
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-  
-      // Decrypt sensitive fields
-      const decryptedUser = {
-        ...user,
-        panNumber: decrypt(user.panNumber),
-        aadharNumber: decrypt(user.aadharNumber),
-        accountNumber: decrypt(user.accountNumber),
-        ifsc: decrypt(user.ifsc),
-        upi: decrypt(user.upi)
-      };
-  
-      res.status(200).json(decryptedUser);
-    } catch (error) {
-      res.status(400).json({ error: error.message });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
-  });
 
-//Request to update user_info
+    // Decrypt sensitive fields
+    const decryptedUser = {
+      ...user,
+      panNumber: decrypt(user.panNumber),
+      aadharNumber: decrypt(user.aadharNumber),
+      accountNumber: decrypt(user.accountNumber),
+      ifsc: decrypt(user.ifsc),
+      upi: decrypt(user.upi),
+    };
 
-router.put('/update_user', async (req, res) => {
-    try {
-      const Useremail = req.query.email
-  
-      // Fetch the existing user
-      const existingUser = await prisma.user.findUnique({
-        where: { email: Useremail }
-      });
-  
-      if (!existingUser) {
-        return res.status(404).json({ message: "User not found" });
-      }
-  
-      // Decrypt sensitive fields
-      const decryptedUser = {
-        ...existingUser,
-        panNumber: existingUser.panNumber ? decrypt(existingUser.panNumber) : '',
-        aadharNumber: existingUser.aadharNumber ? decrypt(existingUser.aadharNumber) : '',
-        accountNumber: existingUser.accountNumber ? decrypt(existingUser.accountNumber) : '',
-        ifsc: existingUser.ifsc ? decrypt(existingUser.ifsc) : '',
-        upi: existingUser.upi ? decrypt(existingUser.upi) : ''
-      };
-  
-      // Update the fields with new values from the request body
-      const updatedUser = {
-        ...decryptedUser,
-        name: req.body.name || decryptedUser.name,
-        contact: req.body.contact || decryptedUser.contact,
-        panNumber: req.body.panNumber ? encrypt(req.body.panNumber) : existingUser.panNumber,
-        aadharNumber: req.body.aadharNumber ? encrypt(req.body.aadharNumber) : existingUser.aadharNumber,
-        accountNumber: req.body.accountNumber ? encrypt(req.body.accountNumber) : existingUser.accountNumber,
-        ifsc: req.body.ifsc ? encrypt(req.body.ifsc) : existingUser.ifsc,
-        upi: req.body.upi ? encrypt(req.body.upi) : existingUser.upi,
-      };
-  
-      // Update the user in the database
-      const result = await prisma.user.update({
-        where: { email: Useremail },
-        data: {
-          name: updatedUser.name,
-          contact: updatedUser.contact,
-          panNumber: updatedUser.panNumber,
-          aadharNumber: updatedUser.aadharNumber,
-          accountNumber: updatedUser.accountNumber,
-          ifsc: updatedUser.ifsc,
-          upi: updatedUser.upi,
-          password: await bcrypt.hash(req.body.password, 10)
-        }
-      });
-  
-      res.status(200).json(result);
-    } catch (error) {
-      res.status(400).json({ error: error.message });
+    res.status(200).json(decryptedUser);
+  } catch (error) {
+    errorHandler(res, error);
+  }
+});
+
+// Request to update user info
+router.put("/update_user", async (req, res) => {
+  try {
+    const { email } = req.query;
+    const { name, contact, panNumber, aadharNumber, accountNumber, ifsc, upi, password } = req.body;
+
+    // Fetch the existing user
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+
+    if (!existingUser) {
+      return res.status(404).json({ message: "User not found" });
     }
-  });
 
-  // Delete the user
-  router.delete('/delete_user', async (req, res) => {
-    try {
-      const userEmail = req.query.email;
-  
-      // Check if the user exists
-      const existingUser = await prisma.user.findUnique({
-        where: { email: userEmail }
-      });
-  
-      if (!existingUser) {
-        return res.status(404).json({ message: "User not found" });
-      }
-  
-      // Delete the user from the database
-      await prisma.user.delete({
-        where: { email: userEmail }
-      });
-  
-      res.status(200).json({ message: "User deleted successfully" });
-    } catch (error) {
-      res.status(400).json({ error: error.message });
-    }
-  });
+    // Decrypt sensitive fields
+    const decryptedUser = {
+      ...existingUser,
+      panNumber: existingUser.panNumber ? decrypt(existingUser.panNumber) : "",
+      aadharNumber: existingUser.aadharNumber ? decrypt(existingUser.aadharNumber) : "",
+      accountNumber: existingUser.accountNumber ? decrypt(existingUser.accountNumber) : "",
+      ifsc: existingUser.ifsc ? decrypt(existingUser.ifsc) : "",
+      upi: existingUser.upi ? decrypt(existingUser.upi) : "",
+    };
 
-  router.get('/check_kyc',async(req,res)=> {
-    const userEmail = req.query.email;
-  
-      // Check if the user exists
-      const existingUser = await prisma.user.findUnique({
-        where: { email: userEmail }
-      });
-    console.log(existingUser)
-    if(existingUser == null){
-      res.status(200).json({message: false})
-    }
-    else if(existingUser.email == req.query.email){
-      res.status(200).json({message: true})
-    }
-    else{
-      res.status(500).json({message: "Internal Server Error"})
-    }
-  })
+    // Encrypt updated values if provided, else retain existing values
+    const updatedUser = {
+      name: name || decryptedUser.name,
+      contact: contact || decryptedUser.contact,
+      panNumber: panNumber ? encrypt(panNumber) : existingUser.panNumber,
+      aadharNumber: aadharNumber ? encrypt(aadharNumber) : existingUser.aadharNumber,
+      accountNumber: accountNumber ? encrypt(accountNumber) : existingUser.accountNumber,
+      ifsc: ifsc ? encrypt(ifsc) : existingUser.ifsc,
+      upi: upi ? encrypt(upi) : existingUser.upi,
+      password: password ? await bcrypt.hash(password, 10) : existingUser.password,
+    };
 
+    const result = await prisma.user.update({
+      where: { email },
+      data: updatedUser,
+    });
 
+    res.status(200).json(result);
+  } catch (error) {
+    errorHandler(res, error);
+  }
+});
+
+// Request to delete user
+router.delete("/delete_user", async (req, res) => {
+  try {
+    const { email } = req.query;
+
+    // Check if user exists
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+
+    if (!existingUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Delete associated integrations
+    await prisma.integration.deleteMany({ where: { email } });
+
+    // Delete the user from the database
+    await prisma.user.delete({ where: { email } });
+
+    res.status(200).json({ message: "User and associated integrations deleted successfully" });
+  } catch (error) {
+    errorHandler(res, error);
+  }
+});
+
+// Request to check KYC status
+router.get("/check_kyc", async (req, res) => {
+  try {
+    const { email } = req.query;
+
+    // Check if the user exists
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+
+    if (!existingUser) {
+      return res.status(200).json({ message: false });
+    }
+
+    res.status(200).json({ message: existingUser.email === email });
+  } catch (error) {
+    errorHandler(res, error, 500);
+  }
+});
 
 module.exports = router;
