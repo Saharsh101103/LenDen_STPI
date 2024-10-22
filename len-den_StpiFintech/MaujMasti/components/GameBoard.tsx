@@ -1,11 +1,12 @@
 "use client";
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion"; // Import Framer Motion for animations
 
-type CircleState = "hidden" | "gem" | "Bomb";
+type CircleState = "hidden" | "gem" | "bomb";
 
 interface GameBoardProps {
     bombCount: number;
-    onSafeClick: (clickCount: number) => void;
+    onSafeClick: (newClickCount: number) => void;
     onGameOver: (isHomeRun: boolean) => void;
     isGameStarted: boolean;
 }
@@ -18,7 +19,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
 }) => {
     const [gameState, setGameState] = useState<CircleState[]>(Array(24).fill("hidden"));
     const [bombPositions, setBombPositions] = useState<Set<number>>(new Set());
-    const [clickCount, setClickCount] = useState(0);
+    const [clickCount, setClickCount] = useState<number>(0);
 
     useEffect(() => {
         if (isGameStarted) {
@@ -42,7 +43,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
 
         const newGameState = [...gameState];
         if (bombPositions.has(index)) {
-            newGameState[index] = "Bomb";
+            newGameState[index] = "bomb";
             setGameState(newGameState);
             onGameOver(false);
         } else {
@@ -62,7 +63,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
         if (!isGameStarted) {
             const finalGameState = [...gameState];
             bombPositions.forEach((pos) => {
-                finalGameState[pos] = "Bomb";
+                finalGameState[pos] = "bomb";
             });
             setGameState(finalGameState);
         }
@@ -70,27 +71,22 @@ const GameBoard: React.FC<GameBoardProps> = ({
 
     return (
         <div className="w-full max-w-2xl mx-auto">
-            <div
-                 className="grid grid-cols-4 sm:grid-cols-6 gap-4 bg-gray-200 p-4 rounded-lg items-center justify-center"
-            >
+            <div className="grid grid-cols-4 sm:grid-cols-6 gap-4 bg-gray-200 p-4 rounded-lg items-center justify-center">
                 {gameState.map((state, index) => (
-                <div
-                    key={index}
-                    className={`aspect-square rounded-full cursor-pointer
-                                w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24
-                                flex items-center justify-center mx-auto my-auto
-                                ${
-                                    state === "hidden"
-                                        ? "bg-white border-2 border-gray-300"
-                                        : state === "gem"
-                                        ? "bg-green-500"
-                                        : "bg-red-500"
-                                }`}
-                    onClick={() => handleCircleClick(index)}
-                />
-            ))}
+                    <motion.div
+                        key={index}
+                        className={`aspect-square rounded-full cursor-pointer
+                            w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24
+                            flex items-center justify-center mx-auto my-auto
+                            ${state === "hidden" ? "bg-white border-2 border-gray-300" : state === "gem" ? "bg-green-500" : "bg-red-500"}`}
+                        onClick={() => handleCircleClick(index)}
+                        initial={{ scale: 1 }}
+                        animate={{ scale: state === "gem" || state === "bomb" ? 1.1 : 1 }}
+                        transition={{ duration: 0.2 }}
+                    />
+                ))}
+            </div>
         </div>
-    </div>
     );
 };
 

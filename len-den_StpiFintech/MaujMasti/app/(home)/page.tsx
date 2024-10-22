@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { motion, useAnimation } from 'framer-motion'
 import { FaCoins, FaGamepad, FaMoneyBillWave, FaTrophy } from 'react-icons/fa'
 
-
 const useCoinCounter = (targetValue: number, duration: number = 2000) => {
   const [count, setCount] = useState(0)
 
@@ -45,7 +44,7 @@ export default function GamingLandingPage() {
   }, [controls])
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-900 to-indigo-900 text-white">
+    <div className="min-h-screen bg-gradient-to-b from-bg-gradient-start to-bg-gradient-end text-white">
       <header className="container mx-auto px-4 py-6">
         <nav className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">MaujMasti</h1>
@@ -77,7 +76,7 @@ export default function GamingLandingPage() {
           >
             <a 
               href="/dashboard" 
-              className="bg-yellow-400 text-purple-900 px-8 py-3 rounded-full font-bold text-lg hover:bg-yellow-300 transition-colors"
+              className="bg-btn-bg text-btn-text px-8 py-3 rounded-full font-bold text-lg hover:bg-btn-bg-hover transition-colors"
             >
               Start Playing Now
             </a>
@@ -93,12 +92,12 @@ export default function GamingLandingPage() {
           ].map((item, index) => (
             <motion.div 
               key={index}
-              className="bg-purple-800 p-6 rounded-lg text-center"
+              className="bg-card-bg p-6 rounded-lg text-center"
               initial={{ opacity: 0, y: 50 }}
               animate={controls}
               custom={index}
             >
-              <item.icon className="text-5xl mb-4 mx-auto text-yellow-400" />
+              <item.icon className="text-5xl mb-4 mx-auto text-icon-color" />
               <h3 className="text-xl font-bold mb-2">{item.title}</h3>
               <p>{item.description}</p>
             </motion.div>
@@ -125,7 +124,7 @@ export default function GamingLandingPage() {
           </motion.div>
         </section>
 
-        <section className="bg-purple-800 p-8 rounded-lg">
+        <section className="bg-card-bg p-8 rounded-lg">
           <h2 className="text-3xl font-bold mb-4">How It Works</h2>
           <ol className="list-decimal list-inside space-y-2">
             <li>Sign up for a free account</li>
@@ -137,7 +136,7 @@ export default function GamingLandingPage() {
         </section>
       </main>
 
-      <footer className="bg-purple-950 py-8 mt-16">
+      <footer className="bg-footer-bg py-8 mt-16">
         <div className="container mx-auto px-4 text-center">
           <p>&copy; 2024 MaujMasti. All rights reserved.</p>
           <div className="mt-4">
