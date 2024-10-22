@@ -51,6 +51,9 @@ export default function ShopPage() {
   const [confirmWithdraw, setConfirmWithdraw] = useState(false)
   const controls = useAnimation()
   const containerRef = useRef(null)
+  const [paymentResult, setPaymentResult] = useState<any>(null); // Holds the payment gateway response
+  const [confirmPayment, setConfirmPayment] = useState<boolean>(false); // Toggles the modal visibility
+
 
   // Start animation when the component mounts
   useEffect(() => {
@@ -68,36 +71,83 @@ setBalance(user?.cash!)
 
 
   // Function to handle purchasing credits
-  const handlePurchase = (amount: number, price: number) => {
-    setBalance(balance! + amount)
-    setTransactions([
-      { id: Date.now(), type: 'Purchase', amount, date: new Date().toISOString().split('T')[0] },
-      ...transactions
-    ])
-    toast.success(`Successfully purchased ${amount} credits!`)
-    controls.start({
-      scale: [1, 1.2, 1],
-      transition: { duration: 0.3 },
-    })
-    setConfirmPurchase(null)
-  }
-
-  // Function to handle withdrawing credits
-  const handleWithdraw = () => {
-    const amount = parseInt(withdrawAmount)
-    if (amount && amount <= balance!) {
-      setBalance(balance! - amount)
-      setTransactions([
-        { id: Date.now(), type: 'Withdraw', amount, date: new Date().toISOString().split('T')[0] },
-        ...transactions
-      ])
-      setWithdrawAmount('')
-      toast.info(`Successfully withdrew ${amount} credits!`)
-      setConfirmWithdraw(false)
-    } else {
-      toast.error('Invalid withdrawal amount!')
+// Update handlePurchase to call the backend API
+const handlePurchase = async (amount: number, price: number) => {
+    try {
+      const response = await fetch('/api/transaction', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'purchase',
+          amount,
+          price,
+          userId: user?.id,
+        }),
+      });
+  
+      const result = await response.json();
+      if (result.payment_url) {
+        // Open the modal with the payment URL returned from the backend
+        setPaymentResult(result.payment_url)
+        setConfirmPayment(true)
+      } else {
+        // Handle success/failure without modal
+        setBalance(balance + amount);  // Update balance locally for now
+        setTransactions([
+          { id: Date.now(), type: 'Purchase', amount, date: new Date().toISOString().split('T')[0] },
+          ...transactions,
+        ]);
+        toast.success(`Successfully purchased ${amount} credits!`);
+      }
+    } catch (error) {
+      console.error("Purchase failed:", error);
+      toast.error('Something went wrong!');
     }
-  }
+  };
+  
+  // Update handleWithdraw to call the backend API
+  const handleWithdraw = async () => {
+    const amount = parseInt(withdrawAmount);
+    if (amount > balance) {
+      toast.error('Insufficient balance');
+      return;
+    }
+  
+    try {
+      const response = await fetch('/api/transaction', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'withdraw',
+          amount,
+          userId: user?.id,
+        }),
+      });
+  
+      const result = await response.json();
+      if (result.payment_url) {
+        // Open the modal with the payment URL returned from the backend
+        setPaymentResult(result.payment_url)
+        setConfirmPayment(true)
+      } else {
+        // Handle success/failure without modal
+        setBalance(balance - amount);
+        setTransactions([
+          { id: Date.now(), type: 'Withdraw', amount, date: new Date().toISOString().split('T')[0] },
+          ...transactions,
+        ]);
+        toast.info(`Successfully withdrew ${amount} credits!`);
+      }
+    } catch (error) {
+      console.error("Withdrawal failed:", error);
+      toast.error('Something went wrong!');
+    }
+  };
+  
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white p-8" ref={containerRef}>
@@ -265,6 +315,24 @@ setBalance(user?.cash!)
               </DialogContent>
             </Dialog>
           </div>
+          {confirmPayment && (
+  <Dialog open={true} onOpenChange={() => setConfirmPayment(false)}>
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Complete Your Purchase</DialogTitle>
+        <DialogDescription>
+          Please complete your purchase using the form below:
+        </DialogDescription>
+      </DialogHeader>
+      {/* Embed the payment gateway's payment form via iframe */}
+      <iframe src={paymentResult.payment_url} className="w-full h-96"></iframe>
+      <DialogFooter>
+        <Button onClick={() => setConfirmPayment(false)} variant="outline">Cancel</Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
+)}
+
         </motion.div>
       </div>
     </div>
