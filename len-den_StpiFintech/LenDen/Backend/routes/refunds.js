@@ -82,14 +82,14 @@ router.post("/create_refund", async (req, res) => {
       })
       console.log("User transaction success", useracc.data)
 
-      if(useracc.data.message == "Transaction Successfull"){
+      if(useracc.data.success == true){
         const customeracc = await axios.post('http://localhost:9000/credit',{
         "account_number" : accountNumber,
         "ifsc" : ifsc,
         "orderAmount" : exists.orderAmount
         })
       console.log("customer transaction success", customeracc.data) 
-      if(customeracc.data.message == "Transaction Successfull"){
+      if(customeracc.data.success == true){
 
         const updatedRefund = await prisma.refunds.update({
           where: { refundId: refundId },
