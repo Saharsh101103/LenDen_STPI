@@ -80,9 +80,21 @@ export async function POST(req: NextRequest) {
     const body = await req.json() as TransactionBody;
 
     // Validate required fields in the body
-    if (!body.transaction_type || (!body.NB_username && !body.UPI && !body.dc_num && !body.cc_num && (!body.account_number || !body.ifsc)) || !body.orderAmount) {
-        return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
+// Validate required fields based on the payment method
+if (body.payment_method === "DEBITCARD") {
+    if (!body.dc_num || !body.expiry || !body.cvv || !body.OTP) {
+        return NextResponse.json({ message: "Missing required debit card details" }, { status: 400 });
     }
+} else if (body.payment_method === "UPI") {
+    if (!body.UPI || body.UPI_SUCCESS === undefined) {
+        return NextResponse.json({ message: "Missing required UPI details" }, { status: 400 });
+    }
+} else if (body.payment_method === "NETBANKING") {
+    if (!body.NB_username || !body.NB_password) {
+        return NextResponse.json({ message: "Missing required net banking details" }, { status: 400 });
+    }
+}
+
 
     // Call the appropriate handler based on the transaction type
     if (body.transaction_type === "DEBIT") {
@@ -90,6 +102,7 @@ export async function POST(req: NextRequest) {
     } else if (body.transaction_type === "CREDIT") {
         return handleCredit(body);
     } else {
+        console.log({ message: "Invalid transaction type" })
         return NextResponse.json({ message: "Invalid transaction type" }, { status: 400 });
     }
 }
@@ -99,6 +112,7 @@ function handleDebit(body: TransactionBody) {
     const account = identify_account(body);
     
     if (!account) {
+        console.log({ message: "Account does not exist" })
         return NextResponse.json({ message: "Account does not exist" }, { status: 404 });
     }
 
@@ -126,8 +140,11 @@ function handleDebit(body: TransactionBody) {
             }
         }
     } else {
+        console.log({  message: "Transaction failed, due to insufficient balance" })
+
         return NextResponse.json({ message: "Transaction failed, due to insufficient balance" }, { status: 400 });
     }
+    console.log({  message: "Invalid account details or payment method" })
 
     return NextResponse.json({ message: "Invalid account details or payment method" }, { status: 400 });
 }

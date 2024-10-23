@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence, useAnimation, useMotionValue, useTransform } from 'framer-motion'
-import { ChevronDown, ChevronUp, CreditCard, Wallet, Sparkles } from 'lucide-react'
+import { ChevronDown, ChevronUp, CreditCard, Wallet, Sparkles, X } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -19,6 +19,47 @@ const creditPackages = [
   { id: 3, amount: 1000, price: 9.99, color: '#45B7D1' },
   { id: 4, amount: 5000, price: 49.99, color: '#F9DB6D' },
 ]
+
+interface ModalProps {
+  isOpen: boolean
+  onClose: () => void
+  title: string
+  children: React.ReactNode
+}
+
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose()
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape)
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape)
+    }
+  }, [isOpen, onClose])
+
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-auto bg-black bg-opacity-40 flex items-center justify-center p-8">
+      <div 
+        className="bg-white rounded-lg h-screen max-h-[55dvh]  max-w-md w-full relative transform transition-all duration-300 ease-in-out"
+        style={{
+          opacity: isOpen ? 1 : 0,
+          transform: isOpen ? 'scale(1)' : 'scale(0.95)',
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  )
+}
 
 // A component that shows a rotating coin animation using Framer Motion values
 const RotatingCoin = () => {
@@ -54,6 +95,13 @@ export default function ShopPage() {
   const containerRef = useRef(null)
   const [paymentResult, setPaymentResult] = useState<any>(null); // Holds the payment gateway response
   const [confirmPayment, setConfirmPayment] = useState<boolean>(false); // Toggles the modal visibility
+  const [iframeHeight, setIframeHeight] = useState('600px')
+
+  const [isOpen, setIsOpen] = useState(false)
+
+  const openModal = () => setIsOpen(true)
+  const closeModal = () => {setIsOpen(false)
+     setConfirmPayment(!confirmPayment)}
 
 
   // Start animation when the component mounts
@@ -76,10 +124,10 @@ export default function ShopPage() {
 const handlePurchase = async (amount: number, price: number) => {
     try {
       const response = await axios.post(`${process.env.NEXT_PUBLIC_DEPLOYMENT_URL}/api/transaction`, {
-        orderId: `1101${Math.random()}`,
+        orderId: `1101${Math.floor(parseInt((Math.random() + (Math.random()*100)).toString()))}`,
         email: "worktogetherks@gmail.com",
         businessName :"Mauj Masti", 
-        customerId : `${user?.username}${user?.id}`, 
+        customerId : user?.username!+user?.id!, 
         customerName : user?.name, 
         customerPhone : "9022442200", 
         customerEmail : user?.email,
@@ -106,6 +154,7 @@ const handlePurchase = async (amount: number, price: number) => {
       }
     } catch (error) {
       console.error("Purchase failed:", error);
+      console.log(`${process.env.NEXT_PUBLIC_PAYMENT_GATEWAY_URL}/payment/create_order`)
       toast.error('Something went wrong!');
     }
   };
@@ -239,7 +288,7 @@ const handlePurchase = async (amount: number, price: number) => {
                   <p className="text-gray-300 relative z-10">Purchase this credit package to boost your gaming experience!</p>
                 </CardContent>
                 <CardFooter>
-                  <Dialog>
+                  <Dialog >
                     <DialogTrigger asChild>
                       <Button
                         className="w-full relative z-10 overflow-hidden group"
@@ -260,8 +309,12 @@ const handlePurchase = async (amount: number, price: number) => {
                         </DialogDescription>
                       </DialogHeader>
                       <DialogFooter>
-                        <Button variant="secondary" onClick={() => setConfirmPurchase(null)}>Cancel</Button>
+                      <DialogTrigger>
+                        <Button variant="secondary" onClick={() => setConfirmPayment(false)}>Cancel</Button>
+                        </DialogTrigger>
+                       <DialogTrigger>
                         <Button onClick={() => handlePurchase(pkg.amount, pkg.price)}>Confirm Purchase</Button>
+                        </DialogTrigger> 
                       </DialogFooter>
                     </DialogContent>
                   </Dialog>
@@ -318,7 +371,7 @@ const handlePurchase = async (amount: number, price: number) => {
               </DialogContent>
             </Dialog>
           </div>
-          {confirmPayment && (
+          {/* {confirmPayment && (
   <Dialog open={true} onOpenChange={() => setConfirmPayment(false)}>
     <DialogContent>
       <DialogHeader>
@@ -328,23 +381,57 @@ const handlePurchase = async (amount: number, price: number) => {
         </DialogDescription>
       </DialogHeader>
      
-      <DialogFooter>
       {paymentResult && (
-            <div className="payment-iframe-container">
-              <iframe
-                src={paymentResult}
-                title="Payment Form"
-              ></iframe>
-            </div>
+             <div className="w-full max-w-md mx-auto">
+             <motion.div
+               initial={{ opacity: 0, y: 20 }}
+               animate={{ opacity: 1, y: 0 }}
+               transition={{ duration: 0.5 }}
+             >
+               <iframe
+                 title="Payment Form"
+                 width="100%"
+                 height={iframeHeight}
+                 frameBorder="0"
+                 scrolling="no"
+                 className="rounded-lg shadow-2xl"
+                 src = {paymentResult}
+               />
+             </motion.div>
+           </div>
           )}
+      <DialogFooter>
         <Button onClick={() => setConfirmPayment(false)} variant="outline">Cancel</Button>
       </DialogFooter>
     </DialogContent>
   </Dialog>
-)}
+  
+)} */}
 
         </motion.div>
       </div>
+<Modal isOpen={confirmPayment} onClose={closeModal} title="Custom Centered Modal" >
+{paymentResult && (
+             <div className="w-full max-w-md m-0 h-full">
+             <motion.div
+               initial={{ opacity: 0, y: 20 }}
+               animate={{ opacity: 1, y: 0 }}
+               transition={{ duration: 0.5 }}
+               className='h-full'
+             >
+               <iframe
+                 title="Payment Form"
+                 width="100%"
+                 height="100%"
+                 frameBorder="0"
+                 scrolling="no"
+                 className="rounded-lg shadow-2xl"
+                 src = {paymentResult}
+               />
+             </motion.div>
+           </div>
+          )}
+      </Modal>
     </div>
   )
 }

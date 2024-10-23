@@ -4,16 +4,17 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter, useParams } from 'next/navigation'
 import { toast } from '@/components/ui/use-toast'
+import axios from 'axios'
 
 
-type PaymentMethod = 'Debit Card' | 'Credit Card' | 'UPI' | 'NetBanking'
+type PaymentMethod = 'DEBITCARD' | 'CREDITCARD' | 'UPI' | 'NETBANKING'
 
 export default function PaymentForm() {
   const router = useRouter() // For navigation, if needed
   const params = useParams() // Access dynamic route parameters
   const { orderId } = params // Destructure orderId
 
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('Debit Card')
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('DEBITCARD')
   const [cardNumber, setCardNumber] = useState('')
   const [cvv, setCvv] = useState('')
   const [expiry, setExpiry] = useState('')
@@ -44,49 +45,28 @@ export default function PaymentForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsProcessing(true)
+    console.log(orderId)
     
     // Prepare payment data based on selected payment method
-    const paymentData: any = {
-      orderId,
-      payment_method: paymentMethod,
-      otp,
-    }
 
-    switch (paymentMethod) {
-      case 'Debit Card':
-        paymentData.dc_num = cardNumber
-        paymentData.cvv = cvv
-        paymentData.expiry = expiry
-        break
-      case 'Credit Card':
-        paymentData.cc_num = cardNumber
-        paymentData.cvv = cvv
-        paymentData.expiry = expiry
-        break
-      case 'NetBanking':
-        paymentData.Nb_username = bankingId
-        paymentData.Nb_password = password
-        break
-      case 'UPI':
-        paymentData.UPI = upiId
-        paymentData.UPI_SUCCESS = false // Initialize as false, set to true upon success
-        break
-      default:
-        break
-    }
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/payment/process_payment`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(paymentData),
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/payment/process_order`, {
+        orderId: orderId,
+    payment_method: paymentMethod,
+    dc_num: paymentMethod == "DEBITCARD" ? cardNumber : "",
+    cc_num: paymentMethod == "CREDITCARD" ? cardNumber : "",
+    expiry: expiry,
+    Nb_username: bankingId,
+    Nb_password: password,
+    UPI: upiId,
+    OTP: otp,
+    cvv: cvv
       })
 
-      const result = await response.json()
+      const result = await response.data
 
-      if (response.ok) {
+      if (response.status === 200) {
         setIsPaymentConfirmed(true)
 
         
@@ -154,15 +134,15 @@ export default function PaymentForm() {
             onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
             className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 transition"
           >
-            <option>Debit Card</option>
-            <option>Credit Card</option>
+            <option>DEBITCARD</option>
+            <option>CREDITCARD</option>
             <option>UPI</option>
             <option>NetBanking</option>
           </select>
         </motion.div>
 
         <AnimatePresence mode="wait">
-          {(paymentMethod === 'Debit Card' || paymentMethod === 'Credit Card') && (
+          {(paymentMethod === 'DEBITCARD' || paymentMethod === 'CREDITCARD') && (
             <motion.div
               key="card"
               initial="hidden"
@@ -200,7 +180,7 @@ export default function PaymentForm() {
             </motion.div>
           )}
 
-          {paymentMethod === 'NetBanking' && (
+          {paymentMethod === 'NETBANKING' && (
             <motion.div
               key="netbanking"
               initial="hidden"

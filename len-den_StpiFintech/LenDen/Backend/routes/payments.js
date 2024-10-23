@@ -33,7 +33,7 @@ router.get("/", (req, res) => {
 
 router.post("/create_order", async (req, res) => {
   const { orderId, email, businessName, customerId, customerName, customerPhone, customerEmail, orderAmount, xId, xSecret } = req.body;
-
+  console.log("Incoming create_order req from", businessName)
   const exists = await prisma.integration.findFirst({
     where: { businessName },
   });
@@ -53,6 +53,7 @@ router.post("/create_order", async (req, res) => {
     });
   } else {
     if(exists.xid == xId && exists.xsecret == xSecret){
+      console.log("Creating order", exists.businessName)
       try {
         const order = await prisma.orders.create({
           data: {
@@ -67,16 +68,20 @@ router.post("/create_order", async (req, res) => {
             status: "PROCESSING",
           },
         });
-  
         
-        const formUrl = `${getBaseUrl()}/paymentForm?orderId=${orderId}`;
-      
+
+
+          console.log("Order Created Successfully")
+          const formUrl = `${getBaseUrl()}/payment/${orderId}`;
+          console.log(formUrl)
+
   
         res.status(200).json({
           message: "Order created successfully",
           formUrl, // Return the URL for the iframe
         })
       } catch (error) {
+        console.log(error.message)
         res.status(400).json({ error: error.message });
       }
     } else{
@@ -192,11 +197,11 @@ router.post("/process_order", async (req, res) => {
           }
         } catch (error) {
           console.log(process.env.BANK_URL)
-          res.status(400).json({ error: error.message });
+          res.status(400).json({ error: error });
         }
        
         } catch (error) {
-          console.log({ error: error.message });
+          res.status(400).json({error: error.message})
         }
       }
   } catch (error) {
