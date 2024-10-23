@@ -9,6 +9,8 @@ const axios = require("axios");
 
 require("dotenv").config();
 
+
+
 router.use(cors());
 router.use(express.json());
 router.use(
@@ -16,6 +18,12 @@ router.use(
     extended: true,
   })
 );
+
+function getBaseUrl() {
+	if (typeof window !== "undefined") return window.location.origin;
+	if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+	return `http://localhost:${process.env.PORT ?? 3000}`;
+}
 
 router.get("/", (req, res) => {
   res.send("Operations on payments");
@@ -60,7 +68,8 @@ router.post("/create_order", async (req, res) => {
           },
         });
   
-        const formUrl = `${process.env.PAYMENT_GATEWAY_URL}/paymentForm?orderId=${orderId}`;
+        
+        const formUrl = `${getBaseUrl()}/paymentForm?orderId=${orderId}`;
       
   
         res.status(200).json({

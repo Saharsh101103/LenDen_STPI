@@ -1,3 +1,4 @@
+import axios, { AxiosError } from 'axios';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { NextResponse } from 'next/server';
 
@@ -12,12 +13,7 @@ async function initiateTransaction(type: 'purchase' | 'withdraw', price: number,
   // Call your payment gateway API with the transaction details
 
 if(type == "purchase"){
-  const gatewayResponse = await fetch(`${process.env.PAYMENT_GATEWAY_URL}/payment/create_order`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
+  const gatewayResponse = await axios.post(`${process.env.PAYMENT_GATEWAY_URL}/payment/create_order`, {
       orderId,
       email,
       businessName,
@@ -26,13 +22,15 @@ if(type == "purchase"){
       customerPhone,
       customerEmail,
       price,
-    }),
-  });
-  const data = await gatewayResponse.json();
+    })
+    
+    
+
+  const data = await gatewayResponse.data;
   // The gateway should return a payment_url or success/failure status
-  if (data.success) {
+  if (gatewayResponse.status == 200) {
     return {
-      payment_url: data.payment_url,  // URL to display the payment modal
+      payment_url: data.formUrl,  // URL to display the payment modal
     };
   } else {
     throw new Error('Payment initiation failed');
@@ -67,12 +65,14 @@ export async function POST(req: NextApiRequest, res: NextApiResponse) {
 
     if (result!.payment_url) {
       // Return the URL for the frontend to open a modal or new tab
+      console.log(result?.payment_url)
       return NextResponse.json({ payment_url: result!.payment_url }, { status: 200 })
     }
     else {
       return NextResponse.json({ error: "Transaction initiation failed" }, { status: 400 })
     }
-  } catch (error) {
-    return NextResponse.json({ message: error }, { status: 500 })
+  } catch (error : unknown) {
+    const err = error as AxiosError
+    return NextResponse.json({ message: err.message }, { status: 500 })
   }
 }
