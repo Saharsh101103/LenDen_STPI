@@ -19,7 +19,6 @@ interface Order {
   orderAmount: number;
 }
 
-
 const Dashboard: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -32,6 +31,7 @@ const Dashboard: React.FC = () => {
   const router = useRouter();
 
   useEffect(() => {
+    let isMounted = true; // To prevent state updates after unmount
     const getSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
@@ -49,14 +49,15 @@ const Dashboard: React.FC = () => {
           axios.get<Order[]>(`${process.env.NEXT_PUBLIC_BACKEND_URL}/payment/get_orders?email=${session.user.email}`),
         ]);
 
-        setKYC(KYC_Status.data.message);
-        setPaymentAmount(userDetails.data.payment_amount);
-        setPayoutAmount(userDetails.data.payout_amount);
-        setRefundAmount(userDetails.data.refund_amount);
-        setOrderCount(orderCountData.data);
-        setOrders(ordersData.data);
-        
-        setLoading(false); // Set loading to false after all data is fetched
+        if (isMounted) {
+          setKYC(KYC_Status.data.message);
+          setPaymentAmount(userDetails.data.payment_amount);
+          setPayoutAmount(userDetails.data.payout_amount);
+          setRefundAmount(userDetails.data.refund_amount);
+          setOrderCount(orderCountData.data);
+          setOrders(ordersData.data);
+          setLoading(false); // Set loading to false after all data is fetched
+        }
       } catch (error) {
         console.error('Error fetching session or user data:', error);
         setLoading(false); // End loading in case of error
@@ -64,12 +65,14 @@ const Dashboard: React.FC = () => {
     };
 
     getSession();
-  }, [router, user]);
 
-
-
+    return () => {
+      isMounted = false; // Clean up function to prevent state updates after unmount
+    };
+  }, [router]); // Removed `user` from dependency array
 
   if (!user) return null;
+
 
   return (
     <>

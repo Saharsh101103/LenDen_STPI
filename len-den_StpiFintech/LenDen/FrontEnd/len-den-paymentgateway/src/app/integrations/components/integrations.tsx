@@ -135,29 +135,35 @@ export default function Integrations() {
   const isSubmitting = form.formState.isSubmitting;
 
   const handleDelete = async (businessName: string) => {
-    await axios.delete(`${process.env.NEXT_PUBLIC_BACKEND_URL}/integration/delete_integration?businessName=${businessName}`);
-    const { data } = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/integration/get_integration?email=${email}`);
-    setIntegrations(data);
+    try {
+      await axios.delete(`${process.env.NEXT_PUBLIC_BACKEND_URL}/integration/delete_integration?businessName=${businessName}`);
+      const { data } = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/integration/get_integration?email=${email}`);
+      setIntegrations(data);
+      
+    } catch (error) {
+      console.log(error)
+    }
   }
 
   const onSubmit = useCallback(async (data: z.infer<typeof FormSchema>) => {
+    // Ensure email is defined before proceeding
+    if (!user?.email) {
+      toast({
+        title: "Error",
+        description: "User email is not available. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+  
     try {
       const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/integration/create_integration`, {
-        email: email,
+        email: user.email,  // Ensure the email is passed
         businessName: data.businessName,
         domain: data.domain,
       });
-
-      if (response.status === 200 && response.data.message !== "Integration with same Business already exists") {
-        toast({
-          title: "Integration Successful",
-          description: "Use API keys provided to integrate PG",
-          variant: "default",
-        });
-
-        const { data } = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/integration/get_integration?email=${email}`);
-        setIntegrations(data);
-      } else if (response.status === 200 && response.data.message === "Integration with same Business already exists") {
+  
+      if (response.status === 200 && response.data.message === "Integration with same Business already exists") {
         toast({
           title: "Integration Unsuccessful",
           description: response.data.message,
@@ -165,18 +171,22 @@ export default function Integrations() {
         });
       } else {
         toast({
-          title: "Integration Unsuccessful",
-          description: "Please try again",
-          variant: "destructive",
+          title: "Integration Successful",
+          description: "Use API keys provided to integrate PG",
+          variant: "default",
         });
+        const { data } = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/integration/get_integration?email=${user.email}`);
+        setIntegrations(data);
       }
     } catch (error) {
       toast({
         title: "Error",
         description: "An error occurred. Please try again.",
+        variant: "destructive",
       });
     }
-  }, [email]);
+  }, [user?.email]);
+  
 
   return (
     <Card className="bg-primary-foreground text-primary min-h-screen pt-14">

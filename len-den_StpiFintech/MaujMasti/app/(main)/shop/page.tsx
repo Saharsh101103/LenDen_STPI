@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { toast, ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { useAuth } from '@/hooks/useAuth'
+import axios from 'axios'
 
 // Array of available credit packages (each with a unique ID, amount, price, and color for display)
 const creditPackages = [
@@ -74,24 +75,22 @@ export default function ShopPage() {
 // Update handlePurchase to call the backend API
 const handlePurchase = async (amount: number, price: number) => {
     try {
-      const response = await fetch('/api/transaction', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          orderId: `1101${Math.random()}`,
-          email: "saharshraj10@gmail.com",
-          businessName :"FlappyBizzz", 
-          customerId : `${user?.username}${user?.id}`, 
-          customerName : user?.name, 
-          customerPhone : "9022442200", 
-          customerEmail : user?.email,
-          price,
-        }),
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_DEPLOYMENT_URL}/api/transaction`, {
+        orderId: `1101${Math.random()}`,
+        email: "worktogetherks@gmail.com",
+        businessName :"Mauj Masti", 
+        customerId : `${user?.username}${user?.id}`, 
+        customerName : user?.name, 
+        customerPhone : "9022442200", 
+        customerEmail : user?.email,
+        price,
+        xId: process.env.XID,
+        xSecret: process.env.XSECRET,
+        type: "purchase"
       });
+
   
-      const result = await response.json();
+      const result = await response.data;
       if (result.payment_url) {
         // Open the modal with the payment URL returned from the backend
         setPaymentResult(result.payment_url)

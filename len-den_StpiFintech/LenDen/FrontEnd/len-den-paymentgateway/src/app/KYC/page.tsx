@@ -61,18 +61,17 @@ function Page() {
   const isSubmitting = form.formState.isSubmitting;
 
   // Handle form submission
-  const onSubmit = useCallback(async (data: z.infer<typeof FormSchema>) => {
-    console.log("onSubmit called with data:", data); // Debugging
+  async function onSubmit(data: z.infer<typeof FormSchema>) {
     if (data.tnc) {
       try {
-        // Check if user exists
+        // Try to fetch the existing user
         const existingUser = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/get_user`, {
           params: { email: user?.email }
         });
-
-        if (existingUser.status == 200) {
-          // User exists, update the user
-          const response = await axios.put(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/update_user`, {
+  
+        // If user is found, update the user
+        if (existingUser.status === 200) {
+          const updatedUser = await axios.put(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/update_user`, {
             email: user?.email,
             name: data.name,
             contact: data.contact,
@@ -81,12 +80,10 @@ function Page() {
             accountNumber: data.accountNumber,
             ifsc: data.ifsc,
             upi: data.upi,
-            KYC: true,
+            isAdmin: false,
           });
-
-          console.log("Update API response", response); // Debugging
-
-          if (response.data.email === user?.email) {
+  
+          if (updatedUser.data.message.email === user?.email) {
             toast({
               title: "Verification Successful",
               description: "You can continue to integration.",
@@ -94,50 +91,51 @@ function Page() {
             });
             router.push('/dashboard');
           } else {
+            throw new Error("Update failed");
+          }
+        }
+      } catch (error) {
+        // Check if the error is 404 (user not found)
+        if (axios.isAxiosError(error) && error.response?.status === 404) {
+          try {
+            // User does not exist, create a new user
+            const newUser = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/create_user`, {
+              email: user?.email,
+              name: data.name,
+              contact: data.contact,
+              panNumber: data.panNumber,
+              aadharNumber: data.aadharNumber,
+              accountNumber: data.accountNumber,
+              ifsc: data.ifsc,
+              upi: data.upi,
+              isAdmin: false,
+            });
+  
+            if (newUser.data.email === user?.email) {
+              toast({
+                title: "Verification Successful",
+                description: "You can continue to integration.",
+                variant: "default",
+              });
+              router.push('/dashboard');
+            } else {
+              throw new Error("Creation failed");
+            }
+          } catch (createError) {
             toast({
-              title: "Verification Unsuccessful",
-              description: "Please try again",
+              title: "Error",
+              description: "Failed to create user. Please try again.",
               variant: "destructive",
             });
           }
         } else {
-          // User does not exist, create a new user
-          const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/create_user`, {
-            email: user?.email,
-            name: data.name,
-            contact: data.contact,
-            panNumber: data.panNumber,
-            aadharNumber: data.aadharNumber,
-            accountNumber: data.accountNumber,
-            ifsc: data.ifsc,
-            upi: data.upi,
-            KYC: true,
+          // Handle other errors (not 404)
+          toast({
+            title: "Error",
+            description: "An error occurred. Please try again.",
+            variant: "destructive",
           });
-
-          console.log("Create API response", response); // Debugging
-
-          if (response.data.email === user?.email) {
-            toast({
-              title: "Verification Successful",
-              description: "You can continue to integration",
-              variant: "default",
-            });
-            router.push('/dashboard');
-          } else {
-            toast({
-              title: "Verification Unsuccessful",
-              description: "Please try again",
-              variant: "destructive",
-            });
-          }
         }
-      } catch (error) {
-        console.error("API error", error); // Debugging
-        toast({
-          title: "Error",
-          description: "An error occurred. Please try again.",
-          variant: "destructive",
-        });
       }
     } else {
       toast({
@@ -146,7 +144,8 @@ function Page() {
         variant: "destructive",
       });
     }
-  }, [user, router]);
+  }
+  
 
   console.log("Rendering form"); // Debugging
 

@@ -24,7 +24,7 @@ router.get("/", (req, res) => {
 //API to create order
 
 router.post("/create_order", async (req, res) => {
-  const { orderId, email, businessName, customerId, customerName, customerPhone, customerEmail, orderAmount } = req.body;
+  const { orderId, email, businessName, customerId, customerName, customerPhone, customerEmail, orderAmount, xId, xSecret } = req.body;
 
   const exists = await prisma.integration.findFirst({
     where: { businessName },
@@ -44,30 +44,34 @@ router.post("/create_order", async (req, res) => {
       message: "Business and provided email are not linked!",
     });
   } else {
-    try {
-      const order = await prisma.orders.create({
-        data: {
-          email,
-          businessName,
-          orderId,
-          customerId,
-          customerName,
-          customerPhone,
-          customerEmail,
-          orderAmount,
-          status: "PROCESSING",
-        },
-      });
-
-      const formUrl = `${process.env.PAYMENT_GATEWAY_URL}/paymentForm?orderId=${orderId}`;
-    
-
-      res.status(200).json({
-        message: "Order created successfully",
-        formUrl, // Return the URL for the iframe
-      })
-    } catch (error) {
-      res.status(400).json({ error: error.message });
+    if(exists.xid == xId && exists.xsecret == xSecret){
+      try {
+        const order = await prisma.orders.create({
+          data: {
+            email,
+            businessName,
+            orderId,
+            customerId,
+            customerName,
+            customerPhone,
+            customerEmail,
+            orderAmount,
+            status: "PROCESSING",
+          },
+        });
+  
+        const formUrl = `${process.env.PAYMENT_GATEWAY_URL}/paymentForm?orderId=${orderId}`;
+      
+  
+        res.status(200).json({
+          message: "Order created successfully",
+          formUrl, // Return the URL for the iframe
+        })
+      } catch (error) {
+        res.status(400).json({ error: error.message });
+      }
+    } else{
+      res.status(400).json({ error: "Unauthorised" });
     }
   }
 });

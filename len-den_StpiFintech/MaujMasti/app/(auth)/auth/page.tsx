@@ -132,7 +132,7 @@ export default function Component() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `http://localhost:3000/dashboard`,
+        redirectTo: `${process.env.NEXT_PUBLIC_DEPLOYMENT_URL}/dashboard`,
       },
     });
   
@@ -148,7 +148,7 @@ export default function Component() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'discord',
       options: {
-        redirectTo: `http://localhost:3000/dashboard`,
+        redirectTo: `${process.env.NEXT_PUBLIC_DEPLOYMENT_URL}/dashboard`,
       },
     });
   
