@@ -11,6 +11,11 @@ require("dotenv").config();
 router.use(cors());
 router.use(express.json());
 router.use(express.urlencoded({ extended: true }));
+function getBaseUrl() {
+	if (typeof window !== "undefined") return window.location.origin;
+	if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+	return `http://localhost:${process.env.PORT ?? 3000}`;
+}
 
 // Default route
 router.get("/", (req, res) => {
@@ -54,7 +59,14 @@ router.post("/create_payout", async (req, res) => {
     const newPayout = await prisma.payouts.create({ data: payoutData });
     newPayout.payoutAmount = newPayout.payoutAmount.toString();
 
-    res.status(200).json(newPayout);
+    const formUrl = `${getBaseUrl()}/payout/${payoutId}`;
+    console.log(formUrl)
+
+
+  res.status(200).json({
+    message: "Order created successfully",
+    formUrl, // Return the URL for the iframe
+  })
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -133,5 +145,10 @@ router.get("/verify_payout", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+router.get('/get_orders', async(req,res) => {
+  const orders = await prisma.payouts.findMany({where: {email: req.query.email}})
+  res.status(200).json(orders);
+})
 
 module.exports = router;

@@ -11,6 +11,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/com
 import Overview from './components/overview';
 import RecentSales from './components/recent-sales';
 import { User } from '@supabase/supabase-js';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface Order {
   id: string;
@@ -209,23 +210,26 @@ const Dashboard: React.FC = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col space-y-4">
-                {loading ? (
-                  <Skeleton className="h-64 w-full" />
-                ) : orderCount === 0 ? (
-                  <div className="flex justify-center items-center w-full h-full">
-                    Your orders will appear here.
-                  </div>
-                ) : (
-                  orders.map((order) => (
-                    <RecentSales
-                      key={order.id}
-                      customerName={order.customerName}
-                      email={order.customerEmail}
-                      amount={order.orderAmount}
-                    />
-                  ))
-                )}
-              </CardContent>
+  {loading ? (
+    <Skeleton className="h-64 w-full" />
+  ) : orderCount === 0 ? (
+    <div className="flex justify-center items-center w-full h-full">
+      Your orders will appear here.
+    </div>
+  ) : (
+    <ScrollArea className="h-72 w-full">
+      {orders.map((order) => (
+        <RecentSales
+          key={order.id}
+          customerName={order.customerName}
+          email={order.customerEmail}
+          amount={order.orderAmount}
+        />
+      ))}
+    </ScrollArea>
+  )}
+</CardContent>
+
             </Card>
           </div>
         </div>

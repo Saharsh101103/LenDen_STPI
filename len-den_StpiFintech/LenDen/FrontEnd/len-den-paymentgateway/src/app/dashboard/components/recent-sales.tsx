@@ -9,7 +9,7 @@ interface RecentSalesProps {
 
 const RecentSales: React.FC<RecentSalesProps> = ({ customerName, email, amount }) => {
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 m-2">
       <div className="flex items-center bg-secondary p-4 rounded-xl">
         <Avatar className="h-9 w-9">
           <AvatarImage src="/avatars/01.png" alt="Avatar" />

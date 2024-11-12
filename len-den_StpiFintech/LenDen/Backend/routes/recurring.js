@@ -268,6 +268,11 @@ router.get("/verify_subscription", async (req, res) => {
       res.status(500).json({ error: error.message });
     }
   });
+
+  router.get('/get_orders', async(req,res) => {
+    const orders = await prisma.subscription.findMany({where: {email: req.query.email}})
+    res.status(200).json(orders);
+  })
   
 
 module.exports = router;

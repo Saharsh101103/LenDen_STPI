@@ -103,8 +103,7 @@ router.get("/get_user", async (req, res) => {
 // Request to update user info
 router.put("/update_user", async (req, res) => {
   try {
-    const { email } = req.query;
-    const { name, contact, panNumber, aadharNumber, accountNumber, ifsc, upi, password } = req.body;
+    const {email, name, contact, panNumber, aadharNumber, accountNumber, ifsc, upi, password } = req.body;
 
     // Fetch the existing user
     const existingUser = await prisma.user.findUnique({ where: { email } });

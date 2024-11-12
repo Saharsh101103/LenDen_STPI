@@ -144,7 +144,7 @@ function handleDebit(body: TransactionBody) {
 
         return NextResponse.json({ message: "Transaction failed, due to insufficient balance" }, { status: 400 });
     }
-    console.log({  message: "Invalid account details or payment method" })
+    console.log({  message: "Invalid account details or payment method during Debit", UPI, UPI_SUCCESS, payment_method })
 
     return NextResponse.json({ message: "Invalid account details or payment method" }, { status: 400 });
 }

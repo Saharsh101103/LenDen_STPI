@@ -35,11 +35,16 @@ const FormSchema = z.object({
 // Define the SignupForm component
 export function SignupForm() {
   const router = useRouter();
+
+  const baseURL = process.env.NODE_ENV === 'production' 
+  ? 'https://len-den-pg.vercel.app' 
+  : 'http://localhost:3000';
+  
   const googleSignIn = async () => {
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `/dashboard`,
+         redirectTo: `${baseURL}/dashboard`
       },
     })
   }
@@ -48,7 +53,7 @@ export function SignupForm() {
     await supabase.auth.signInWithOAuth({
       provider: 'github',
       options: {
-        redirectTo: `/dashboard`,
+         redirectTo: `${baseURL}/dashboard`
       },
     })  
   }

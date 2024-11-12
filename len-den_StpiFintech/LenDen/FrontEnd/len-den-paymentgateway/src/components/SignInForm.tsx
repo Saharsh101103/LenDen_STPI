@@ -33,6 +33,11 @@ const FormSchema = z.object({
 // Define the SigninForm component
 export function SigninForm() {
   const router = useRouter();
+
+  const baseURL = process.env.NODE_ENV === 'production' 
+  ? 'https://len-den-pg.vercel.app' 
+  : 'http://localhost:3000';
+
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -42,19 +47,29 @@ export function SigninForm() {
   })
   const isSubmitting = form.formState.isSubmitting;
   const googleSignIn = async () => {
-    await supabase.auth.signInWithOAuth({
+    const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_WEBSITE_URL}/dashboard`
+        redirectTo: `${baseURL}/dashboard`
       },
-    })
-  }
+    });
+  
+    if (error) {
+      toast({
+        title: "Google sign-in failed",
+        description: error.message,
+        variant: "destructive",
+      });
+      console.error("Error during Google sign-in:", error.message);
+    }
+  };
+  
 
   const githubSignIn = async () => {
     await supabase.auth.signInWithOAuth({
       provider: 'github',
       options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_WEBSITE_URL}/dashboard`
+         redirectTo: `${baseURL}/dashboard`
       },
     })  
   }
